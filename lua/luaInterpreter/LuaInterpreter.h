@@ -1,24 +1,20 @@
 #pragma once
 
-#include "..\..\MyTools\MyTools.h"
-#include <functional>
-
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-#include "..\..\lua\lua.h"
-#include "..\..\lua\lualib.h"
-#include "..\..\lua\lauxlib.h"
-#ifdef __cplusplus
-}
-#endif
+#include "../../MyTools/LuaTools.h"
 
 #define Not(x) (!x)
 
-#pragma comment (lib, "lua.lib")
+#pragma comment (lib, "Lua.lib")
 
-class LuaInterpreter
+#ifdef LUAINTERPRETER_EXPORTS
+#define LUAINTERPRETER_API __declspec(dllexport)
+#else
+#ifdef LUAINTERPRETER_IMPORTS
+#define LUAINTERPRETER_API __declspec(dllimport)
+#endif
+#endif
+
+class LUAINTERPRETER_API LuaInterpreter
 {
 public:
 	LuaInterpreter();
