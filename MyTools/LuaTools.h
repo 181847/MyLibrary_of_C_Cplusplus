@@ -2,6 +2,7 @@
 #include "DLLTools.h"
 #include "MyAssert.h"
 #include "MyTools.h"
+#include "LuaHeadFiles.h"
 #include <functional>
 
 // this head file contain some tools for writing c module for lua
