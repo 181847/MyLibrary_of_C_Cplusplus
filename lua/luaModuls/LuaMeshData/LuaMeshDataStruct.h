@@ -2,13 +2,13 @@
 
 
 // my help tools
-#include "..\..\MyTools\LuaTools.h"
-#include "..\..\MyTools\MyTools.h"
-#include "..\..\MyTools\Cleaner.h"
+#include "../../../MyTools/LuaTools.h"
+#include "../../../MyTools/MyTools.h"
+#include "../../../MyTools/Cleaner.h"
 
 // necessary directX modules
-#include "..\..\DirectX12\Common\GeometryGenerator.h"
-#include "..\..\DirectX12\Common\d3dUtil.h"
+#include "../../../DirectX12/Common/GeometryGenerator.h"
+#include "../../../DirectX12/Common/d3dUtil.h"
 
 // Here define the geometry container for store the mesh data in lua userData.
 namespace Lua
