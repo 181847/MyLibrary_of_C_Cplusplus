@@ -4,7 +4,7 @@
 extern "C"
 {
 #endif
-int DLL_API luaopen_MeshData(lua_State * L)
+int LUAMESHDATA_API luaopen_MeshData(lua_State * L)
 {
 	luaL_newmetatable(L, "LoadAssets.MeshData");
 	lua_pushvalue(L, -1);
