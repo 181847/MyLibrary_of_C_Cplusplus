@@ -2,22 +2,16 @@
 
 #include "LuaMeshDataStruct.h"
 
-// lua head files, in the C style
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-// includes
-#include "..\..\lua\lua.h"
-#include "..\..\lua\lauxlib.h"
-#include "..\..\lua\lualib.h"
-// includes
-#ifdef __cplusplus
-}
-#endif
-
 // compiled lua dll
 #pragma comment(lib, "lua.lib")
+
+#ifdef LUAMESHDATA_EXPORTS
+#define LUAMESHDATA_API DLL_EXPORT_API
+#else
+#ifdef LUAMESHDATA_IMPORTS
+#define LUAMESHDATA_API DLL_IMPORT_API
+#endif
+#endif
 
 
 // get pointer (in the userData) from the lua_State
@@ -34,7 +28,7 @@ extern "C"
 extern "C"
 {
 #endif
-	int DLL_API luaopen_MeshData(lua_State * L);
+	int LUAMESHDATA_API luaopen_MeshData(lua_State * L);
 #ifdef __cplusplus
 }
 #endif
