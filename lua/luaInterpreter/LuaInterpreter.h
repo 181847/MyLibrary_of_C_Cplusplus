@@ -31,13 +31,15 @@ public:
 	// throw SimpleException if it is not a number,
 	// only if there is no error,
 	// the number will be pop from the stack.
-	lua_Number ToNumberAndClear();
+	template<typename NUMBER_TYPE = lua_Number>
+	NUMBER_TYPE ToNumberAndPop();
 
 	// get the top element as integer,
 	// throw SimpleException if it is not a number,
 	// only if there is no error,
 	// the integer will be pop from the stack.
-	lua_Integer ToIntegerAndClear();
+	template<typename INTEGER_TYPE = lua_Integer>
+	INTEGER_TYPE ToIntegerAndPop();
 
 	// get the top element as string,
 	// throw SimpleException if it is not a String or 
@@ -54,6 +56,10 @@ public:
 
 	// pop one element on the top of the stack
 	void Pop();
+
+	// load and call the file,
+	// throws SimpleException whenever there is an error.
+	LuaInterpreter* DoFile(const char * file);
 
 	// can use lambda to directly control the lua_State;
 	void Do(std::function<void(lua_State * L)> func);
@@ -78,6 +84,28 @@ private:
 	char buffer[255];
 	int error;
 };
+
+template<typename NUMBER_TYPE>
+inline NUMBER_TYPE LuaInterpreter::ToNumberAndPop()
+{
+	ASSERT(m_L);
+	int isNum = 0;
+	auto ret = lua_tonumberx(m_L, -1, &isNum);
+	ThrowIfFalse(isNum);
+	lua_pop(m_L, 1);
+	return static_cast<NUMBER_TYPE>(ret);
+}
+
+template<typename INTEGER_TYPE>
+inline INTEGER_TYPE LuaInterpreter::ToIntegerAndPop()
+{
+	ASSERT(m_L);
+	int isNum = 0;
+	auto ret = lua_tointegerx(m_L, -1, &isNum);
+	ThrowIfFalse(isNum);
+	lua_pop(m_L, 1);
+	return static_cast<INTEGER_TYPE>(ret);
+}
 
 template<int BufferSize>
 inline void LuaInterpreter::ToStringAndClear(char * buffer)

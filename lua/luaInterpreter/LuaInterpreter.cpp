@@ -34,26 +34,6 @@ int LuaInterpreter::GetStackSize()
 	return lua_gettop(m_L);
 }
 
-lua_Number LuaInterpreter::ToNumberAndClear()
-{
-	ASSERT(m_L);
-	int isNum = 0;
-	auto ret = lua_tonumberx(m_L, -1, &isNum);
-	ThrowIfFalse(isNum);
-	lua_pop(m_L, 1);
-	return ret;
-}
-
-lua_Integer LuaInterpreter::ToIntegerAndClear()
-{
-	ASSERT(m_L);
-	int isNum = 0;
-	auto ret = lua_tointegerx(m_L, -1, &isNum);
-	ThrowIfFalse(isNum);
-	lua_pop(m_L, 1);
-	return ret;
-}
-
 void LuaInterpreter::GetFieldOnTop(const char * key)
 {
 	lua_getfield(m_L, -1, key);
@@ -67,6 +47,18 @@ void LuaInterpreter::GetIndexOnTop(const lua_Integer index)
 void LuaInterpreter::Pop()
 {
 	lua_pop(m_L, 1);
+}
+
+LuaInterpreter * LuaInterpreter::DoFile(const char * file)
+{
+	int error = luaL_loadfile(m_L, file) || lua_pcall(m_L, 0, 0, 0);
+	if (error)
+	{
+		fprintf(stderr, "error:\t%s\n", lua_tostring(m_L, -1));
+		// must throw the exception.
+		ThrowIfFalse(false && "do file Error");
+	}
+	return this;
 }
 
 void LuaInterpreter::Do(std::function<void(lua_State*L)> func)
