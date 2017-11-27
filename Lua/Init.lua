@@ -49,6 +49,6 @@ print("Initialization Completed")
 
 bf = assert(loadfile("StartUpFile.lua"))
 
-if bf do
+if bf then
     bf()
 end
