@@ -1,6 +1,10 @@
 #pragma once
 #include <string>
 #include <exception>
+
+
+// use TOGGLE_ALL_DEBUG_MESSAGE to turn on all the debug output
+
 class  SimpleException: std::exception
 {
 public:
@@ -27,12 +31,14 @@ public:
 };
 
 
-
+#ifdef TOGGLE_ALL_DEBUG_MESSAGE
+#define ASSERTIONS_ENABLED
+#endif
 // remaind that if the ASSERTIONS_ENABLED is turned off, 
 // the expr in the ASSERT() will no exist.
 // please not put any key operation in the ASSERT(For that you 
 // may consider using ThrowIfFalse(bool).).
-#if ASSERTIONS_ENABLED
+#ifdef ASSERTIONS_ENABLED
 #define ASSERT(expr) \
 	if(expr){}\
 	else\
@@ -43,9 +49,13 @@ public:
 #define ASSERT(expr)//不求值
 #endif
 
+
+#ifdef TOGGLE_ALL_DEBUG_MESSAGE
+#define CHECK_THROW_IF_ENABLED
+#endif
 // Simulate to the ThrowIfFailed(HRESULT).
 // Here we just use a boolean to toggle the exception.
-#if CHECK_THROW_IF_ENABLED
+#ifdef CHECK_THROW_IF_ENABLED
 #define ThrowIfFalse(expr)\
 	if (expr){}\
 	else\
@@ -56,20 +66,15 @@ public:
 #define ThrowIfFalse(expr) expr
 #endif
 
-#ifdef _DEBUG
+#ifdef TOGGLE_ALL_DEBUG_MESSAGE
 #define SHOW_DEBUG_MESSAGE
 #endif
-
-
-#undef SHOW_DEBUG_MESSAGE
-
 // print some message only in the debug mode.
 #ifdef SHOW_DEBUG_MESSAGE
 #define DEBUG_MESSAGE(format, ...) fprintf(stderr, format, ##__VA_ARGS__)
 #else
 #define DEBUG_MESSAGE(...)
 #endif
-
 
 //这个宏适用于一些代码没有实现的时候，抛出这个异常，防止忘记一些代码的实现
 #define THROW_UNIMPLEMENT_EXCEPTION(pChar)\
