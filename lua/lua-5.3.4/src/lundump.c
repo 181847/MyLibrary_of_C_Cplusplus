@@ -85,7 +85,7 @@ static lua_Integer LoadInteger (LoadState *S) {
 }
 
 
-static TString *LoadString (LoadState *S) {
+static TString *LuaLoadString (LoadState *S) {
   size_t size = LoadByte(S);
   if (size == 0xFF)
     LoadVar(S, size);
@@ -140,7 +140,7 @@ static void LoadConstants (LoadState *S, Proto *f) {
       break;
     case LUA_TSHRSTR:
     case LUA_TLNGSTR:
-      setsvalue2n(S->L, o, LoadString(S));
+      setsvalue2n(S->L, o, LuaLoadString(S));
       break;
     default:
       lua_assert(0);
@@ -189,18 +189,18 @@ static void LoadDebug (LoadState *S, Proto *f) {
   for (i = 0; i < n; i++)
     f->locvars[i].varname = NULL;
   for (i = 0; i < n; i++) {
-    f->locvars[i].varname = LoadString(S);
+    f->locvars[i].varname = LuaLoadString(S);
     f->locvars[i].startpc = LoadInt(S);
     f->locvars[i].endpc = LoadInt(S);
   }
   n = LoadInt(S);
   for (i = 0; i < n; i++)
-    f->upvalues[i].name = LoadString(S);
+    f->upvalues[i].name = LuaLoadString(S);
 }
 
 
 static void LoadFunction (LoadState *S, Proto *f, TString *psource) {
-  f->source = LoadString(S);
+  f->source = LuaLoadString(S);
   if (f->source == NULL)  /* no source in dump? */
     f->source = psource;  /* reuse parent's source */
   f->linedefined = LoadInt(S);
