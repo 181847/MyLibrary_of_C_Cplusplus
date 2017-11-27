@@ -2,14 +2,25 @@
 
 LuaInterpreter::LuaInterpreter()
 {
+	this->isMainThread = true;
 	m_L = luaL_newstate();
 	luaL_openlibs(m_L);
+}
+
+LuaInterpreter::LuaInterpreter(lua_State * L, bool isMainThread)
+{
+	m_L = L;
+	this->isMainThread = isMainThread;
 }
 
 
 LuaInterpreter::~LuaInterpreter()
 {
-	lua_close(m_L);
+	// only the mainThread can close
+	if (isMainThread)
+	{
+		lua_close(m_L);
+	}
 }
 
 void LuaInterpreter::Run()

@@ -18,6 +18,7 @@ class LUAINTERPRETER_API LuaInterpreter
 {
 public:
 	LuaInterpreter();
+	LuaInterpreter(lua_State * L, bool isMainThread = false);
 	~LuaInterpreter();
 
 	DELETE_COPY_CONSTRUCTOR(LuaInterpreter)
@@ -77,6 +78,7 @@ public:
 
 public:
 	bool stop = false;
+	bool isMainThread = false;
 	lua_State * m_L;
 
 private:
