@@ -13,6 +13,7 @@ local function AddPath(path)
     package.path = package.path..";"..path
 end
 
+-- add path for the C module such as the dll
 local function AddCPath(path)
     package.cpath = package.cpath..";"..path
 end
@@ -21,10 +22,6 @@ end
 function PrintTable(t)
     for k, v in pairs(t) do print(k, v) end
 end
-
-AddPath("D:\\GitHub\\Lua\\LoadAssets\\?.lua")
--- AddPath("D:\\GitHub\\Lua\\LoadAssets\\?.dll")
-AddPath(".\\luaScript\\?.lua")
 
 -- store the original 'loadfile', replace it with loadfileInPath
 old_loadfile = loadfile
@@ -49,3 +46,9 @@ loadfile = function(filePath)
 end
 
 print("Initialization Completed")
+
+bf = assert(loadfile("StartUpFile.lua"))
+
+if bf do
+    bf()
+end
