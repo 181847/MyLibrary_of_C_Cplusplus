@@ -248,12 +248,6 @@ static void close_state (lua_State *L) {
   luaM_freearray(L, G(L)->strt.hash, G(L)->strt.size);
   freestack(L);
   lua_assert(gettotalbytes(g) == sizeof(LG));
-
-#ifdef THREAD_SAFTY
-#ifdef USE_MUTEX
-  CloseHandle(g->m_mutex);
-#endif
-#endif
   (*g->frealloc)(g->ud, fromstate(L), sizeof(LG), 0);  /* free main block */
 }
 
@@ -334,11 +328,6 @@ LUA_API lua_State *lua_newstate (lua_Alloc f, void *ud) {
   g->gcfinnum = 0;
   g->gcpause = LUAI_GCPAUSE;
   g->gcstepmul = LUAI_GCMUL;
-#ifdef THREAD_SAFTY
-#ifdef USE_MUTEX
-  g->m_mutex = CreateMutex(NULL, FALSE, NULL);
-#endif
-#endif
   for (i=0; i < LUA_NUMTAGS; i++) g->mt[i] = NULL;
   if (luaD_rawrunprotected(L, f_luaopen, NULL) != LUA_OK) {
     /* memory allocation error: free partial state */

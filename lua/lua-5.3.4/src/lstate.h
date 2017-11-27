@@ -14,10 +14,6 @@
 #include "lzio.h"
 
 
-#ifdef THREAD_SAFTY
-#include <Windows.h>
-#endif
-
 /*
 
 ** Some notes about garbage-collected objects: All objects in Lua must
@@ -155,13 +151,6 @@ typedef struct global_State {
   TString *tmname[TM_N];  /* array with tag-method names */
   struct Table *mt[LUA_NUMTAGS];  /* metatables for basic types */
   TString *strcache[STRCACHE_N][STRCACHE_M];  /* cache for strings in API */
-
-#ifdef THREAD_SAFTY
-#ifdef USE_MUTEX
-  HANDLE m_mutex;
-#endif
-#endif
-
 } global_State;
 
 

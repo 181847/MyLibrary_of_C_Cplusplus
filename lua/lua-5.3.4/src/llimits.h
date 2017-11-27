@@ -4,16 +4,6 @@
 ** See Copyright Notice in lua.h
 */
 
-/*
-** define the thread safty lock
-*/
-#ifdef THREAD_SAFTY
-#ifdef USE_MUTEX
-#define lua_lock(L) (WaitForSingleObject(&G(L)->m_mutex, INFINITE))
-#define lua_unlock(L)	(ReleaseMutex(&G(L)->m_mutex))
-#endif
-#endif
-
 #ifndef llimits_h
 #define llimits_h
 
