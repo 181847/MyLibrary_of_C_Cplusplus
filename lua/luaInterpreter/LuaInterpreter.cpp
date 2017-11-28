@@ -1,5 +1,8 @@
 #include "LuaInterpreter.h"
 
+namespace Lua
+{
+
 LuaInterpreter::LuaInterpreter()
 {
 	this->isMainThread = true;
@@ -23,7 +26,7 @@ LuaInterpreter::~LuaInterpreter()
 	}
 }
 
-void LuaInterpreter::Run()
+LuaInterpreter * LuaInterpreter::Run()
 {
 	fprintf(stdout, ">>");
 	while (Not(stop) && fgets(buffer, sizeof(buffer), stdin) != NULL)
@@ -38,6 +41,7 @@ void LuaInterpreter::Run()
 	}
 	
 	stop = true;
+	return this;
 }
 
 int LuaInterpreter::GetStackSize()
@@ -45,22 +49,38 @@ int LuaInterpreter::GetStackSize()
 	return lua_gettop(m_L);
 }
 
-void LuaInterpreter::GetFieldOnTop(const char * key)
+PLuaInterpreter LuaInterpreter::GetGlobal(const char * varname)
+{
+	int type = lua_getglobal(m_L, varname);
+	ASSERT(type != LUA_TNONE);
+	return this;
+}
+
+PLuaInterpreter LuaInterpreter::SetGlobalAndPop(const char * varname)
+{
+	lua_setglobal(m_L, varname);
+	return this;
+}
+
+PLuaInterpreter LuaInterpreter::GetFieldOnTop(const char * key)
 {
 	lua_getfield(m_L, -1, key);
+	return this;
 }
 
-void LuaInterpreter::GetIndexOnTop(const lua_Integer index)
+PLuaInterpreter LuaInterpreter::GetIndexOnTop(const lua_Integer index)
 {
 	lua_geti(m_L, -1, index);
+	return this;
 }
 
-void LuaInterpreter::Pop()
+PLuaInterpreter LuaInterpreter::Pop()
 {
 	lua_pop(m_L, 1);
+	return this;
 }
 
-LuaInterpreter * LuaInterpreter::DoFile(const char * file)
+PLuaInterpreter LuaInterpreter::DoFile(const char * file)
 {
 	int error = luaL_loadfile(m_L, file) || lua_pcall(m_L, 0, 0, 0);
 	if (error)
@@ -72,12 +92,54 @@ LuaInterpreter * LuaInterpreter::DoFile(const char * file)
 	return this;
 }
 
-void LuaInterpreter::Do(std::function<void(lua_State*L)> func)
+PLuaInterpreter LuaInterpreter::Do(std::function<void(lua_State*L)> func)
 {
 	func(m_L);
+	return this;
 }
 
 bool LuaInterpreter::IsNil()
 {
 	return lua_isnil(m_L, -1);
+}
+
+PLuaInterpreter LuaInterpreter::Foreach(
+	std::function<		void(
+					PLuaInterpreter pLuaInter,		bool	keyIsNumber,
+					lua_Integer		keyItg,			const	char*keyStr)> work)
+{
+	ASSERT(LUA_TTABLE == lua_type(m_L, -1));
+	int				keyType				= LUA_TNONE;
+	lua_Integer		keyItg				= -1;
+	const char *	keyStr				= nullptr;
+
+	lua_pushnil(m_L);
+	// remaind that before each iteration, key is on the top,
+	// after calling 'lua_next', the value is on the top,
+	// for next iteration, we must 're'pop the value,
+	// and keep the key on the top before calling 'lua_next'.
+	while (lua_next(m_L, -2))
+	{
+		// get key type
+		keyType = lua_type(m_L, -2);
+		ASSERT(keyType == 0 || keyType == 1);
+
+		switch (keyType)
+		{
+		case LUA_TSTRING:
+			keyItg = -1;
+			keyStr = lua_tostring(m_L, -2);
+			break;
+
+		case LUA_TNUMBER:
+			keyItg = lua_tointeger(m_L, -2);
+			keyStr = nullptr;
+			break;
+		}
+
+		work(this, static_cast<bool>(keyType - LUA_TNUMBER), keyItg, keyStr);
+	}// while
+	return this;
+}
+
 }

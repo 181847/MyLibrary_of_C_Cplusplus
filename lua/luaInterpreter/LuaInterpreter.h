@@ -14,6 +14,12 @@
 #endif
 #endif
 
+namespace Lua
+{
+
+class LUAINTERPRETER_API LuaInterpreter;
+typedef LuaInterpreter * PLuaInterpreter;
+
 class LUAINTERPRETER_API LuaInterpreter
 {
 public:
@@ -24,7 +30,7 @@ public:
 	DELETE_COPY_CONSTRUCTOR(LuaInterpreter)
 
 	// start running 
-	void Run();
+	PLuaInterpreter Run();
 
 	int GetStackSize();
 
@@ -34,6 +40,9 @@ public:
 	// the number will be pop from the stack.
 	template<typename NUMBER_TYPE = lua_Number>
 	NUMBER_TYPE ToNumberAndPop();
+	//|||||||||||||||||||||||||||||||||||||
+	template<typename NUMBER_TYPE = lua_Number>
+	PLuaInterpreter ToNumberAndPop(NUMBER_TYPE * outNumber);
 
 	// get the top element as integer,
 	// throw SimpleException if it is not a number,
@@ -41,6 +50,9 @@ public:
 	// the integer will be pop from the stack.
 	template<typename INTEGER_TYPE = lua_Integer>
 	INTEGER_TYPE ToIntegerAndPop();
+	//|||||||||||||||||||||||||||||||||||||
+	template<typename INTEGER_TYPE = lua_Integer>
+	PLuaInterpreter ToIntegerAndPop(INTEGER_TYPE * outInteger);
 
 	// get the top element as string,
 	// throw SimpleException if it is not a String or 
@@ -48,25 +60,31 @@ public:
 	// copy the string into the buffer,
 	// then pop the string from the stack.
 	template<int BufferSize>
-	void ToStringAndClear(char * buffer);
+	PLuaInterpreter ToStringAndClear(char * buffer);
+
+	// push a global value to the top of the stack
+	PLuaInterpreter GetGlobal(const char * varname);
+
+	// set the top element as a global variable with the name
+	PLuaInterpreter SetGlobalAndPop(const char * varname);
 
 	// getField on the top element.
-	void GetFieldOnTop(const char * key);
+	PLuaInterpreter GetFieldOnTop(const char * key);
+
 	// get indexed field of the top 
-	void GetIndexOnTop(const lua_Integer index);
+	PLuaInterpreter GetIndexOnTop(const lua_Integer index);
 
 	// pop one element on the top of the stack
-	void Pop();
+	PLuaInterpreter Pop();
 
 	// load and call the file,
 	// throws SimpleException whenever there is an error.
-	LuaInterpreter* DoFile(const char * file);
+	PLuaInterpreter DoFile(const char * file);
 
 	// can use lambda to directly control the lua_State;
-	void Do(std::function<void(lua_State * L)> func);
+	PLuaInterpreter Do(std::function<void(lua_State * L)> func);
 
 	bool IsNil();
-
 
 	// use a outer function to convert the userData(void*)
 	// to the specific pointer type.
@@ -74,7 +92,22 @@ public:
 	USERDATA_TYPE *
 	ToUserDataAndClear(
 		const char * metaTable, 
-		std::function<USERDATA_TYPE*(void*)> converter);
+		std::function<USERDATA_TYPE*(USERDATA_TYPE*)> converter =
+			[](USERDATA_TYPE * pointer) {return pointer; });
+	//|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+	template<typename USERDATA_TYPE>
+	PLuaInterpreter
+		ToUserDataAndClear(
+			const char * metaTable,
+			USERDATA_TYPE * outUserdata,
+			std::function<USERDATA_TYPE*(USERDATA_TYPE*)> converter 
+				= [](USERDATA_TYPE * pointer) {return pointer; });
+
+	// ensure the table sit on the top of the stack
+	PLuaInterpreter Foreach(
+		std::function<	void( // <- no return value
+			/* lambda parameter->*/		PLuaInterpreter pLuaInter, bool	keyIsNumber,
+			/* lambda parameter->*/		lua_Integer		keyItg, const	char*keyStr)> work);
 
 public:
 	bool stop = false;
@@ -92,10 +125,21 @@ inline NUMBER_TYPE LuaInterpreter::ToNumberAndPop()
 {
 	ASSERT(m_L);
 	int isNum = 0;
-	auto ret = lua_tonumberx(m_L, -1, &isNum);
+	NUMBER_TYPE ret = static_cast<NUMBER_TYPE>(lua_tonumberx(m_L, -1, &isNum));
 	ThrowIfFalse(isNum);
 	lua_pop(m_L, 1);
 	return static_cast<NUMBER_TYPE>(ret);
+}
+
+template<typename NUMBER_TYPE>
+inline PLuaInterpreter LuaInterpreter::ToNumberAndPop(NUMBER_TYPE * outNumber)
+{
+	ASSERT(m_L);
+	int isNum = 0;
+	*outNumber = static_cast<NUMBER_TYPE>(lua_tonumberx(m_L, -1, &isNum));
+	ThrowIfFalse(isNum);
+	lua_pop(m_L, 1);
+	return this;
 }
 
 template<typename INTEGER_TYPE>
@@ -103,14 +147,25 @@ inline INTEGER_TYPE LuaInterpreter::ToIntegerAndPop()
 {
 	ASSERT(m_L);
 	int isNum = 0;
-	auto ret = lua_tointegerx(m_L, -1, &isNum);
+	INTEGER_TYPE ret = static_cast<INTEGER_TYPE>(lua_tointegerx(m_L, -1, &isNum));
 	ThrowIfFalse(isNum);
 	lua_pop(m_L, 1);
-	return static_cast<INTEGER_TYPE>(ret);
+	return ret;
+}
+
+template<typename INTEGER_TYPE>
+inline PLuaInterpreter LuaInterpreter::ToIntegerAndPop(INTEGER_TYPE * outInteger)
+{
+	ASSERT(m_L);
+	int isNum = 0;
+	*outInteger = static_cast<INTEGER_TYPE>(lua_tointegerx(m_L, -1, &isNum));
+	ThrowIfFalse(isNum);
+	lua_pop(m_L, 1);
+	return this;
 }
 
 template<int BufferSize>
-inline void LuaInterpreter::ToStringAndClear(char * buffer)
+inline PLuaInterpreter LuaInterpreter::ToStringAndClear(char * buffer)
 {
 	ASSERT(m_L);
 	size_t stringLen;
@@ -122,17 +177,34 @@ inline void LuaInterpreter::ToStringAndClear(char * buffer)
 
 	strcpy_s(buffer, BufferSize, tempString);
 	lua_pop(m_L, 1);
+	return this;
 }
 
 template<typename USERDATA_TYPE>
 inline USERDATA_TYPE *
 LuaInterpreter::ToUserDataAndClear(
 	const char * metaTableName, 
-	std::function<USERDATA_TYPE*(void*)> converter)
+	std::function<USERDATA_TYPE*(USERDATA_TYPE*)> converter)
 {
-	void * pointer = lua_touserdata(m_L, -1);
+	auto * pointer = reinterpret_cast<USERDATA_TYPE*>(
+		luaL_checkudata(L, -1, metaTableName));
 	ThrowIfFalse(pointer);
 	Pop();
 	// pop the userData
 	return converter(pointer);
 }
+
+template<typename USERDATA_TYPE>
+inline PLuaInterpreter LuaInterpreter::ToUserDataAndClear(
+	const char * metaTable, 
+	USERDATA_TYPE * outUserdata, 
+	std::function<USERDATA_TYPE*(USERDATA_TYPE*)> converter)
+{
+	outUserdata = reinterpret_cast<USERDATA_TYPE*>(
+		luaL_checkudata(L, -1, metaTableName));
+		ThrowIfFalse(pointer);
+	outUserdata = converter(outUserdata);
+	return this;
+}
+
+}// namespace Lua
