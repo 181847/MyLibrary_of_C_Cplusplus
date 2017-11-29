@@ -13,6 +13,7 @@
 // Here define the geometry container for store the mesh data in lua userData.
 namespace Lua
 {
+	static const char * LuaMeshDataMetatableName = "LoadAssets.MeshData";
 	using uint16 = std::uint16_t;
 	using uint32 = std::uint32_t;
 	struct Vertex
