@@ -55,9 +55,7 @@ const char * __cdecl Formater<BufferSize>::format(const char * fmt, ...)
 {
 	va_list args;
 	va_start(args, fmt);
-	vsprintf(buffer, BufferSize, fmt, args);
+	vsprintf_s(buffer, BufferSize, fmt, args);
 	va_end(args);
-
-
 	return buffer;
 }
