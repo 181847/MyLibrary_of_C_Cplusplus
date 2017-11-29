@@ -104,14 +104,12 @@ bool LuaInterpreter::IsNil()
 }
 
 PLuaInterpreter LuaInterpreter::Foreach(
-	std::function<		void(
-					PLuaInterpreter pLuaInter,		bool	keyIsNumber,
-					lua_Integer		keyItg,			const	char*keyStr)> work)
+	std::function<		void(LUA_INTERPRETER_FOEEACH_LAMBDA_ARGS)> work)
 {
 	ASSERT(LUA_TTABLE == lua_type(m_L, -1));
-	int				keyType				= LUA_TNONE;
-	lua_Integer		keyItg				= -1;
-	const char *	keyStr				= nullptr;
+	int				keyType		= LUA_TNONE;
+	UINT			keyItg		= -1;
+	const char *	keyStr		= nullptr;
 
 	lua_pushnil(m_L);
 	// remaind that before each iteration, key is on the top,
@@ -122,22 +120,23 @@ PLuaInterpreter LuaInterpreter::Foreach(
 	{
 		// get key type
 		keyType = lua_type(m_L, -2);
-		ASSERT(keyType == 0 || keyType == 1);
+		ASSERT(keyType == LUA_TNUMBER || keyType == LUA_TSTRING);
 
 		switch (keyType)
 		{
+		case LUA_TNUMBER:
+			keyItg = static_cast<UINT>(lua_tointeger(m_L, -2));
+			keyStr = nullptr;
+			break;
+
+
 		case LUA_TSTRING:
 			keyItg = -1;
 			keyStr = lua_tostring(m_L, -2);
 			break;
-
-		case LUA_TNUMBER:
-			keyItg = lua_tointeger(m_L, -2);
-			keyStr = nullptr;
-			break;
 		}
 
-		work(this, static_cast<bool>(keyType - LUA_TNUMBER), keyItg, keyStr);
+		work(this, keyType == LUA_TNUMBER, keyItg, keyStr);
 	}// while
 	return this;
 }
