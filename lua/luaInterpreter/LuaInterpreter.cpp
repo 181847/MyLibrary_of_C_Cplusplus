@@ -3,6 +3,9 @@
 namespace Lua
 {
 
+// each command containt a '\n' at the tail of the command.
+const char * LuaInterpreter::exitInteractiveModeCommand = "exit()\n";
+
 LuaInterpreter::LuaInterpreter()
 {
 	this->isMainThread = true;
@@ -28,9 +31,16 @@ LuaInterpreter::~LuaInterpreter()
 
 LuaInterpreter * LuaInterpreter::Run()
 {
+	size_t commandLength = 0;
 	fprintf(stdout, ">>");
 	while (Not(stop) && fgets(buffer, sizeof(buffer), stdin) != NULL)
 	{
+		// retrive last '\n'
+		if (0 == strcmp(buffer, exitInteractiveModeCommand))
+		{
+			fprintf(stdout, "you have entered 'exit()', interactive mode exited.\n");
+			break;
+		}
 		error = luaL_loadstring(m_L, buffer) || lua_pcall(m_L, 0, 0, 0);
 		if (error)
 		{
@@ -39,8 +49,6 @@ LuaInterpreter * LuaInterpreter::Run()
 		}
 		fprintf(stdout, ">>");
 	}
-	
-	stop = true;
 	return this;
 }
 
@@ -104,7 +112,7 @@ bool LuaInterpreter::IsNil()
 }
 
 PLuaInterpreter LuaInterpreter::Foreach(
-	std::function<		void(LUA_INTERPRETER_FOEEACH_LAMBDA_ARGS)> work)
+	std::function<		void(LUA_INTERPRETER_FOREACH_LAMBDA_ARGS)> work)
 {
 	ASSERT(LUA_TTABLE == lua_type(m_L, -1));
 	int				keyType		= LUA_TNONE;
