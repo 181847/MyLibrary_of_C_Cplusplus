@@ -156,10 +156,10 @@ int lua_addVertex(lua_State * L)
 		posCount, nmlCount, tguCount, texCount);
 
 	// check index range
-	if (	positionIndex	>= posCount
-		||  texCIndex		>= texCount
-		||	normalIndex		>= nmlCount
-		||	tangentUIndex	>= tguCount)
+	if (	positionIndex	> posCount
+		||  texCIndex		> texCount
+		||	normalIndex		> nmlCount
+		||	tangentUIndex	> tguCount)
 	{
 		lua_pushboolean(L, false);
 		lua_pushstring(L, "some compent index out of range.");
