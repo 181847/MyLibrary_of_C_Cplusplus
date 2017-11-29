@@ -13,6 +13,7 @@ public:
 	const char * format(int i);
 
 	char * bufferPointer();
+	enum {Size = BufferSize};
 
 private:
 	char  buffer[BufferSize];
