@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../../MyTools/LuaTools.h"
+#include "../../MyTools/UsefulDataType.h"
 
 #define Not(x) (!x)
 
@@ -13,6 +14,12 @@
 #define LUAINTERPRETER_API __declspec(dllimport)
 #endif
 #endif
+
+// here is the marco to short the function prameter presentation
+// in the LuaInterpreter::Foreach
+#define  LUA_INTERPRETER_FOEEACH_LAMBDA_ARGS\
+	/* lambda parameter->*/		Lua::PLuaInterpreter pLuaInter, bool	keyIsNumber,\
+	/* lambda parameter->*/		UINT					keyItg, const	char*keyStr
 
 namespace Lua
 {
@@ -103,11 +110,10 @@ public:
 			std::function<USERDATA_TYPE*(USERDATA_TYPE*)> converter 
 				= [](USERDATA_TYPE * pointer) {return pointer; });
 
-	// ensure the table sit on the top of the stack
+	// ensure the table sit on the top of the stack,
+	// on each iteration, the user should pop the value.
 	PLuaInterpreter Foreach(
-		std::function<	void( // <- no return value
-			/* lambda parameter->*/		PLuaInterpreter pLuaInter, bool	keyIsNumber,
-			/* lambda parameter->*/		lua_Integer		keyItg, const	char*keyStr)> work);
+		std::function<void(LUA_INTERPRETER_FOEEACH_LAMBDA_ARGS)> work);
 
 public:
 	bool stop = false;
