@@ -12,6 +12,8 @@ public:
 	const char * format(const char * string);
 	const char * format(int i);
 
+	bool operator ==(const char * compto);
+
 	char * bufferPointer();
 	enum {Size = BufferSize};
 
@@ -59,4 +61,10 @@ const char * __cdecl Formater<BufferSize>::format(const char * fmt, ...)
 	vsprintf_s(buffer, BufferSize, fmt, args);
 	va_end(args);
 	return buffer;
+}
+
+template<int BufferSize>
+bool Formater<BufferSize>::operator == (const char * compto)
+{
+	return 0 == strcmp(buffer, compto);
 }
