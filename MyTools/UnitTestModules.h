@@ -4,6 +4,20 @@
 #include <vector>
 #include "MyAssert.h"
 
+#define EQ(a, b)	(a == b) 
+#define GT(a, b)	(a >  b)
+#define LE(a, b)	(a >  b)
+#define GT_EQ(a, b) (a >  b)
+#define LE_EQ(a, b) (a >  b)
+#define FT_EQ(fa, fb) (1e-5 > std::abs(fa - fb))
+#define NOT_EQ(a, b) (a != b)
+
+#define CHECK_ARR_2(arr, COMPARE, e0, e1)\
+	(COMPARE(arr[0], e0) && COMPARE(arr[1], e1))
+
+#define CHECK_ARR_3(arr, COMPARE, e0, e1, e2) \
+	(COMPARE(arr[0], e0) && COMPARE(arr[1], e1) && COMPARE(arr[2], e3)
+
 /*
 ** to use this module , please use DECLARE_TEST_UNITS; at the head
 ** of the executed .cpp file, 
