@@ -9,12 +9,12 @@ function DebugLogger(message, ...)
 end
 
 -- AddPath to add a path to the search for loading file
-local function AddPath(path)
+function AddPath(path)
     package.path = package.path..";"..path
 end
 
 -- add path for the C module such as the dll
-local function AddCPath(path)
+function AddCPath(path)
     package.cpath = package.cpath..";"..path
 end
 
@@ -47,8 +47,8 @@ end
 
 print("Initialization Completed")
 
-bf = assert(loadfile("StartUpFile.lua"))
+local SU = assert(loadfile("StartUp.lua"))
 
-if bf then
-    bf()
+if SU then
+    SU()
 end
