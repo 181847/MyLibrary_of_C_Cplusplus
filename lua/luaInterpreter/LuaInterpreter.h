@@ -23,6 +23,8 @@
 #define LUA_INTERPRETER_FOREACH_LAMBDA_START\
 	[](LUA_INTERPRETER_FOREACH_LAMBDA_ARGS){
 
+#define EACH luaInterForeach
+
 #define LUA_INTERPRETER_FOREACH_LAMBDA_END }
 
 namespace Lua
@@ -126,14 +128,19 @@ public:
 	// If error happend throws a SimpleException.
 	PLuaInterpreter Call(int functionIndex, UINT paramCount, UINT returnCount);
 
-	 
+	 // push data to the interpreter
 	PLuaInterpreter PushInteger(lua_Integer itg);
-
-	 
+	// ||||||||||||||||||||||||||||||||||||||||||||
 	PLuaInterpreter PushNumber(lua_Number num);
-
-	 
+	// |||||||||||||||||||||||||||||||||||||||||||| 
 	PLuaInterpreter PushString(const char * str);
+
+	// get the length of the top element.
+	template<typename INTEGER_TYPE = lua_Integer>
+	INTEGER_TYPE LengthOfTop();
+	// |||||||||||||||||||||||||||||||||||||||||||| 
+	template<typename INTEGER_TYPE = lua_Integer>
+	PLuaInterpreter LengthOfTop(INTEGER_TYPE * pItg);
 
 public:
 	bool stop = false;
@@ -230,6 +237,19 @@ inline PLuaInterpreter LuaInterpreter::ToUserDataAndClear(
 		luaL_checkudata(m_L, -1, metaTable));
 	ThrowIfFalse(*outUserdata);
 	*outUserdata = converter(*outUserdata);
+	return this;
+}
+
+template<typename INTEGER_TYPE>
+inline INTEGER_TYPE LuaInterpreter::LengthOfTop()
+{
+	return static_cast<INTEGER_TYPE>(luaL_len(m_L, -1));
+}
+
+template<typename INTEGER_TYPE>
+inline PLuaInterpreter LuaInterpreter::LengthOfTop(INTEGER_TYPE * pItg)
+{
+	*pItg = static_cast<INTEGER_TYPE>(luaL_len(m_L, -1));
 	return this;
 }
 
