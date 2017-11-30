@@ -122,6 +122,19 @@ public:
 	PLuaInterpreter Foreach(
 		std::function<void(LUA_INTERPRETER_FOREACH_LAMBDA_ARGS)> work);
 
+	// call a lua function, 
+	// If error happend throws a SimpleException.
+	PLuaInterpreter Call(int functionIndex, UINT paramCount, UINT returnCount);
+
+	 
+	PLuaInterpreter PushInteger(lua_Integer itg);
+
+	 
+	PLuaInterpreter PushNumber(lua_Number num);
+
+	 
+	PLuaInterpreter PushString(const char * str);
+
 public:
 	bool stop = false;
 	bool isMainThread = false;
@@ -219,5 +232,6 @@ inline PLuaInterpreter LuaInterpreter::ToUserDataAndClear(
 	*outUserdata = converter(*outUserdata);
 	return this;
 }
+
 
 }// namespace Lua

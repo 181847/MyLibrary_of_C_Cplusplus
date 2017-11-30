@@ -149,4 +149,30 @@ PLuaInterpreter LuaInterpreter::Foreach(
 	return this;
 }
 
+PLuaInterpreter LuaInterpreter::Call(int functionIndex, UINT paramCount, UINT returnCount)
+{
+	int error = lua_pcall(m_L, paramCount, returnCount, 0);
+	ThrowIfFalse(error == LUA_OK);
+	return this;
 }
+
+PLuaInterpreter LuaInterpreter::PushInteger(lua_Integer itg)
+{
+	lua_pushinteger(m_L, itg);
+	return this;
+}
+
+PLuaInterpreter LuaInterpreter::PushNumber(lua_Number num)
+{
+	lua_pushnumber(m_L, num);
+	return this;
+}
+
+PLuaInterpreter LuaInterpreter::PushString(const char * str)
+{
+	lua_pushstring(m_L, str);
+	return this;
+}
+
+
+}// namespace Lua
