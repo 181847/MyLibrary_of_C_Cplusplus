@@ -4,6 +4,14 @@
 #include <vector>
 #include "MyAssert.h"
 
+/*
+** to use this module , please use DECLARE_TEST_UNITS; at the head
+** of the executed .cpp file, 
+** implements the 'void TestUnit::GetReady()'/'void TestUnit::AfterTest();'
+** implements the 'void TestUnit::AddTestUnit()', you can find more at
+** the comment of the 'void AddTestUnit()'.
+*/
+
 extern std::vector<std::function<bool(std::string& unitName)>> testUnits;
 
 extern unsigned int totalCount;
@@ -37,7 +45,7 @@ void AfterTest();
 // to add the test units,
 // for simple using , just 
 // use the macro 'TEST_UNIT_START(UnitName)' and 
-// 'TEST_UNIT_END'.
+// 'TEST_UNIT_END' to include the desired code.
 // Inside the two marco , there is a lambda,
 // the only thing that you will concen about is the return 
 // of the lambda.
