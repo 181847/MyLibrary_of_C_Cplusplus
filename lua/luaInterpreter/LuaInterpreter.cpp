@@ -116,7 +116,7 @@ PLuaInterpreter LuaInterpreter::If(
 	std::function<void(PLuaInterpreter)> Then, 
 	std::function<void(PLuaInterpreter)> Else)
 {
-	ThrowIfFalse(false && "this function is no completed, don't use it!");
+	//ThrowIfFalse(false && "this function is no completed, don't use it!");
 	if (condition(this))
 		Then(this);
 	else
@@ -131,14 +131,25 @@ PLuaInterpreter LuaInterpreter::Foreach(
 	int				keyType		= LUA_TNONE;
 	UINT			keyItg		= -1;
 	const char *	keyStr		= nullptr;
+	// the nextIterationSize will record the size of next iteration of the field,
+	// because each iteration need the key at the top,
+	// and the value must be popped before next iteration,
+	// for simplification , here we just resume the stack statues
+	// as before the 'work' called, through poping the extra element
+	// the 'work' added, if the 'work' pop the element to where 
+	// below the original key, we throw a SimpleException.
+	int	nextIterationSize = 0;
 
 	lua_pushnil(m_L);
+	// record the original key's location.
+	nextIterationSize = lua_gettop(m_L);
 	// remaind that before each iteration, key is on the top,
 	// after calling 'lua_next', the value is on the top,
 	// for next iteration, we must 're'pop the value,
 	// and keep the key on the top before calling 'lua_next'.
 	while (lua_next(m_L, -2))
 	{
+
 		// get key type
 		keyType = lua_type(m_L, -2);
 		ASSERT(keyType == LUA_TNUMBER || keyType == LUA_TSTRING);
