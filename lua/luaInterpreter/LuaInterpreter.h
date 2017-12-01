@@ -25,10 +25,10 @@
 // to start and end a lambda to to be the parameter of the 'Lua::LuaInte...Foreach(...)',
 // it start a lambda that automaticlly capture 
 // the references of the variable.
-#define LUA_INTERPRETER_FOREACH_LAMBDA_START\
+#define FOREACH_START\
 	[&](LUA_INTERPRETER_FOREACH_LAMBDA_ARGS){
 #define EACH luaInterForeach
-#define LUA_INTERPRETER_FOREACH_LAMBDA_END }
+#define FOREACH_END }
 
 // next three marco used in Lua::LuaInterpreter::ConstainStackSizeMax(...)
 // to start and end a lambda to be the parameter of the 'Lua::...Constra..Max(...)',
@@ -36,6 +36,33 @@
 #define CONSTRAIN_START [&](Lua::PLuaInterpreter pLuaInterConstrain) -> void{
 #define CONSTRAIN_TARGET pLuaInterConstrain
 #define CONSTRAIN_END }
+
+// next three marco used in Lua::LuaInterepreter::If(..., ..., ...)
+// to start and end lambda to the parameter.
+// it automatically capture the references of the variables.
+#define CONDITION_START [&](Lua::PLuaInterpreter pLuaInterCondition) -> bool{
+#define CONDITION_TARGET pLuaInterCondition
+#define CONDITION_END }
+// ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+#define THEN_START [&](Lua::PLuaInterpreter pLuaInterThen) -> void{
+#define THEN_TARGET pLuaInterThen
+#define THEN_END }
+// ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+#define ELSE_START [&](Lua::PLuaInterpreter pLuaInterElse) -> void{
+#define ELSE_TARGET pLuaInterElse
+#define ELSE_END }
+// ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+// VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
+// next three marco conbine the previous marcos 
+// to make Lua::LuaInterpreter::If(...) more easy to use.
+#define LUA_INTERPRETER_IF\
+	CONDITION_START
+#define	LUA_INTERPRETER_THEN\
+	CONDITION_END, THEN_START
+#define LUA_INTERPRETER_ELSE\
+	THEN_END, ELSE_START
+#define LUA_INTERPRETER_ENDIF\
+	ELSE_END
 
 namespace Lua
 {
