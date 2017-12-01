@@ -169,6 +169,7 @@ public:
 
 	// ensure the table sit on the top of the stack,
 	// on each iteration, the user should pop the value.
+	// after the iteration, the table will still be on the top of the stack.
 	PLuaInterpreter Foreach(
 		std::function<void(LUA_INTERPRETER_FOREACH_LAMBDA_ARGS)> work);
 
