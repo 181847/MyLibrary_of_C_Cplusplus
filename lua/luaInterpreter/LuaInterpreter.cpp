@@ -139,6 +139,7 @@ PLuaInterpreter LuaInterpreter::Foreach(
 	// the 'work' added, if the 'work' pop the element to where 
 	// below the original key, we throw a SimpleException.
 	int	nextIterationSize = 0;
+	int shouldBePopedSize = 0;
 
 	lua_pushnil(m_L);
 	// record the original key's location.
@@ -167,9 +168,23 @@ PLuaInterpreter LuaInterpreter::Foreach(
 			keyStr = lua_tostring(m_L, -2);
 			break;
 		}
-
+		// let the outer function do with the value which sit on
+		// the top of the stack.
 		work(this, keyType == LUA_TNUMBER, keyItg, keyStr);
+
+		// resume the stack for next iteration,
+		// the nextIterationSize is the size of the stack
+		// when after putting a nil to the top 
+		// and before the lua_state enter the lua_next(...).
+		shouldBePopedSize = lua_gettop(m_L) - nextIterationSize;
+		ASSERT(shouldBePopedSize >= 0);
+		if (shouldBePopedSize)
+			lua_pop(m_L, shouldBePopedSize);
 	}// while
+
+	// be care that the last lua_next() return 0 
+	// and it automatically pop the key,
+	// to keep the stack clear.
 	return this;
 }
 
