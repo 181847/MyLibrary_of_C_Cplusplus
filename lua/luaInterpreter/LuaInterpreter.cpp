@@ -111,6 +111,19 @@ bool LuaInterpreter::IsNil()
 	return lua_isnil(m_L, -1);
 }
 
+PLuaInterpreter LuaInterpreter::If(
+	std::function<bool(PLuaInterpreter)> condition, 
+	std::function<void(PLuaInterpreter)> Then, 
+	std::function<void(PLuaInterpreter)> Else)
+{
+	ThrowIfFalse(false && "this function is no completed, don't use it!");
+	if (condition(this))
+		Then(this);
+	else
+		Else(this);
+	return this;
+}
+
 PLuaInterpreter LuaInterpreter::Foreach(
 	std::function<		void(LUA_INTERPRETER_FOREACH_LAMBDA_ARGS)> work)
 {
@@ -171,6 +184,20 @@ PLuaInterpreter LuaInterpreter::PushNumber(lua_Number num)
 PLuaInterpreter LuaInterpreter::PushString(const char * str)
 {
 	lua_pushstring(m_L, str);
+	return this;
+}
+
+PLuaInterpreter LuaInterpreter::ConstainStackSizeMax(std::function<void(PLuaInterpreter)> opt)
+{
+	int size = lua_gettop(m_L);
+	opt(this);
+	size = lua_gettop(m_L) - size;
+	
+	if (size > 0)
+	{
+		lua_pop(m_L, size);
+	}
+	
 	return this;
 }
 

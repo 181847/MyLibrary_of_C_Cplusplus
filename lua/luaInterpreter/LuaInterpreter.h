@@ -20,12 +20,22 @@
 #define  LUA_INTERPRETER_FOREACH_LAMBDA_ARGS\
 	/* lambda parameter->*/		Lua::PLuaInterpreter	luaInterForeach,	bool			keyIsNumber,\
 	/* lambda parameter->*/		UINT					keyItg,				const char *	keyStr
+
+// next three marco is used in Lua::LuaInterpreter::Foreach(...)
+// to start and end a lambda to to be the parameter of the 'Lua::LuaInte...Foreach(...)',
+// it start a lambda that automaticlly capture 
+// the references of the variable.
 #define LUA_INTERPRETER_FOREACH_LAMBDA_START\
-	[](LUA_INTERPRETER_FOREACH_LAMBDA_ARGS){
-
+	[&](LUA_INTERPRETER_FOREACH_LAMBDA_ARGS){
 #define EACH luaInterForeach
-
 #define LUA_INTERPRETER_FOREACH_LAMBDA_END }
+
+// next three marco used in Lua::LuaInterpreter::ConstainStackSizeMax(...)
+// to start and end a lambda to be the parameter of the 'Lua::...Constra..Max(...)',
+// it automatically capture the references of the variables.
+#define CONSTRAIN_START [&](Lua::PLuaInterpreter pLuaInterConstrain) -> void{
+#define CONSTRAIN_TARGET pLuaInterConstrain
+#define CONSTRAIN_END }
 
 namespace Lua
 {
@@ -98,7 +108,18 @@ public:
 	// can use lambda to directly control the lua_State;
 	PLuaInterpreter Do(std::function<void(lua_State * L)> func);
 
+	// Is the top element is nil?
 	bool IsNil();
+
+	// to ensure the continuous of the operation of LuaInterpreter,
+	// add a branch to the function,
+	// the condition function to return true or false,
+	// if it return true, the 'Then' function will be called,
+	// if false, the 'Else' function instead.
+	PLuaInterpreter If(
+		std::function<bool(PLuaInterpreter)> condition,
+		std::function<void(PLuaInterpreter)> Then, 
+		std::function<void(PLuaInterpreter)> Else);
 
 	// use a outer function to convert the userData(void*)
 	// to the specific pointer type.
@@ -141,6 +162,11 @@ public:
 	// |||||||||||||||||||||||||||||||||||||||||||| 
 	template<typename INTEGER_TYPE = lua_Integer>
 	PLuaInterpreter LengthOfTop(INTEGER_TYPE * pItg);
+
+	// this function ensure that after the opt called,
+	// the stack size dosen't grow up (but it is possible to drop down),
+	// it actually just pop the element of the overflow the previous stack size.
+	PLuaInterpreter ConstainStackSizeMax(std::function<void(PLuaInterpreter)> opt);
 
 public:
 	bool stop = false;
