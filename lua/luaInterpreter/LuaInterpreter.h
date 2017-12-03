@@ -280,7 +280,9 @@ LuaInterpreter::ToUserDataAndClear(
 	const char * metaTableName, 
 	std::function<USERDATA_TYPE*(void*)> converter)
 {
-	return converter(luaL_checkudata(m_L, -1, metaTableName));
+	void * ret = luaL_checkudata(m_L, -1, metaTableName);
+	lua_pop(m_L, 1);
+	return converter(ret);
 }
 
 template<typename USERDATA_TYPE>
@@ -290,6 +292,7 @@ inline PLuaInterpreter LuaInterpreter::ToUserDataAndClear(
 	std::function<USERDATA_TYPE*(void*)> converter)
 {
 	*outUserdata = converter(luaL_checkudata(m_L, -1, metaTable));
+	lua_pop(m_L, 1);
 	return this;
 }
 
