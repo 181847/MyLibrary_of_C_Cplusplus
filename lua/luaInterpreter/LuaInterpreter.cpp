@@ -105,6 +105,13 @@ bool LuaInterpreter::IsNil()
 	return lua_isnil(m_L, -1);
 }
 
+PLuaInterpreter LuaInterpreter::IsNil(bool * isNil)
+{
+	ASSERT(isNil);
+	*isNil = lua_isnil(m_L, -1);
+	return this;
+}
+
 PLuaInterpreter LuaInterpreter::If(
 	std::function<bool(PLuaInterpreter)> condition, 
 	std::function<void(PLuaInterpreter)> Then, 

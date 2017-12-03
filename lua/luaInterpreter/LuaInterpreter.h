@@ -140,6 +140,8 @@ public:
 
 	// Is the top element is nil?
 	bool IsNil();
+	// |||||||||||||||||||||||||||||||||
+	PLuaInterpreter IsNil(bool * isNil);
 
 	// to ensure the continuous of the operation of LuaInterpreter,
 	// add a branch to the function,
