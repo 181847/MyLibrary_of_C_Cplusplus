@@ -64,6 +64,12 @@
 #define LUA_INTERPRETER_ENDIF\
 	ELSE_END
 
+template<typename USERDATATYPE>
+static std::function<USERDATATYPE*(void*)> CreatUDataConverter()
+{
+	return [](void * pointer) -> USERDATATYPE* { return reinterpret_cast<USERDATATYPE*>(pointer); };
+}
+
 namespace Lua
 {
 
@@ -132,9 +138,6 @@ public:
 	// throws SimpleException whenever there is an error.
 	PLuaInterpreter DoFile(const char * file);
 
-	// can use lambda to directly control the lua_State;
-	PLuaInterpreter Do(std::function<void(lua_State * L)> func);
-
 	// Is the top element is nil?
 	bool IsNil();
 
@@ -154,8 +157,9 @@ public:
 	USERDATA_TYPE *
 	ToUserDataAndClear(
 		const char * metaTable, 
-		std::function<USERDATA_TYPE*(USERDATA_TYPE*)> converter =
-			[](USERDATA_TYPE * pointer) {return pointer; });
+		std::function<USERDATA_TYPE*(void*)> converter
+			//[](void * pointer) {return reinterpret_cast<USERDATA_TYPE*>(pointer); });
+			= CreatUDataConverter<USERDATA_TYPE>());
 	//|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 	// be careful that we must pass in a pointer which point to a pointer,
 	// but the lambda paramter and return value is just a pointer to userdata.
@@ -164,8 +168,9 @@ public:
 		ToUserDataAndClear(
 			const char * metaTable,
 			USERDATA_TYPE ** outUserdata,
-			std::function<USERDATA_TYPE*(USERDATA_TYPE*)> converter 
-				= [](USERDATA_TYPE * pointer) {return pointer; });
+			std::function<USERDATA_TYPE*(void*)> converter 
+				//= [](void * pointer) {return reinterpret_cast<USERDATA_TYPE*>(pointer); });
+				= CreatUDataConverter<USERDATA_TYPE>());
 
 	// ensure the table sit on the top of the stack,
 	// on each iteration, the user should pop the value.
@@ -271,26 +276,18 @@ template<typename USERDATA_TYPE>
 inline USERDATA_TYPE *
 LuaInterpreter::ToUserDataAndClear(
 	const char * metaTableName, 
-	std::function<USERDATA_TYPE*(USERDATA_TYPE*)> converter)
+	std::function<USERDATA_TYPE*(void*)> converter)
 {
-	auto * pointer = reinterpret_cast<USERDATA_TYPE*>(
-		luaL_checkudata(m_L, -1, metaTableName));
-	ThrowIfFalse(pointer);
-	Pop();
-	// pop the userData
-	return converter(pointer);
+	return converter(luaL_checkudata(m_L, -1, metaTableName));
 }
 
 template<typename USERDATA_TYPE>
 inline PLuaInterpreter LuaInterpreter::ToUserDataAndClear(
 	const char * metaTable, 
 	USERDATA_TYPE ** outUserdata, 
-	std::function<USERDATA_TYPE*(USERDATA_TYPE*)> converter)
+	std::function<USERDATA_TYPE*(void*)> converter)
 {
-	*outUserdata = reinterpret_cast<USERDATA_TYPE*>(
-		luaL_checkudata(m_L, -1, metaTable));
-	ThrowIfFalse(*outUserdata);
-	*outUserdata = converter(*outUserdata);
+	*outUserdata = converter(luaL_checkudata(m_L, -1, metaTable));
 	return this;
 }
 

@@ -100,12 +100,6 @@ PLuaInterpreter LuaInterpreter::DoFile(const char * file)
 	return this;
 }
 
-PLuaInterpreter LuaInterpreter::Do(std::function<void(lua_State*L)> func)
-{
-	func(m_L);
-	return this;
-}
-
 bool LuaInterpreter::IsNil()
 {
 	return lua_isnil(m_L, -1);
