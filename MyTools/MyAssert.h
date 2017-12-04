@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <exception>
+#include <assert.h>
 
 
 // use TOGGLE_ALL_DEBUG_MESSAGE to turn on all the debug output
@@ -46,7 +47,11 @@ public:
 		throw SimpleException( #expr, __FILE__, __LINE__);\
 	}
 #else
+#ifdef USE_SYS_ASSERT
+#define ASSERT(expr) assert(expr)
+#else
 #define ASSERT(expr)//≤ª«Û÷µ
+#endif
 #endif
 
 
