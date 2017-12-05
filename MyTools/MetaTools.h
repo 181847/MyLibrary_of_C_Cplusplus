@@ -1,5 +1,14 @@
 #pragma once
 
+// this template is used to store 
+// some integer.
+template<size_t number>
+struct NUMBER_CONTAINER
+{
+public:
+	enum { ret = number };
+};
+
 template<bool CONDITION, typename THEN, typename ELSE>
 class IF__ {};
 template<typename THEN, typename ELSE>
