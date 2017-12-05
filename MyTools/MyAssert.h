@@ -40,18 +40,18 @@ public:
 // please not put any key operation in the ASSERT(For that you 
 // may consider using ThrowIfFalse(bool).).
 #ifdef ASSERTIONS_ENABLED
+#ifdef USE_SYS_ASSERT
+#define ASSERT(expr) assert(expr)
+#else
 #define ASSERT(expr) \
 	if(expr){}\
 	else\
 	{\
 		throw SimpleException( #expr, __FILE__, __LINE__);\
 	}
-#else
-#ifdef USE_SYS_ASSERT
-#define ASSERT(expr) assert(expr)
+#endif
 #else
 #define ASSERT(expr)//≤ª«Û÷µ
-#endif
 #endif
 
 
