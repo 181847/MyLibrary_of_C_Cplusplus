@@ -6,7 +6,9 @@ typedef unsigned long	DWORD;
 
 typedef unsigned int UINT;
 
-
-
 typedef unsigned char u8;
 typedef unsigned long u32;
+
+// this type is used to do the pointer add and substract operation,
+// which stand for unsigned pointer.
+typedef unsigned long uptr;
