@@ -43,7 +43,6 @@ extern unsigned int	success;
 
 #define TEST_UNIT_END }))
 
-
 namespace TestUnit 
 {
 
