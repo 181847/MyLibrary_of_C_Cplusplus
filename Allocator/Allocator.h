@@ -1,10 +1,10 @@
 #pragma once
-#include "../../Library/MyTools/UsefulDataType.h"
-#include "../../Library/MyTools/MyAssert.h"
-#include "../../Library/MyTools/MyTools.h"
-#include "../../Library/MyTools/DLLTools.h"
+#include <MyTools/UsefulDataType.h>
+#include <MyTools/MyAssert.h>
+#include <MyTools/MyTools.h>
+#include <MyTools/DLLTools.h>
+#include <MyTools/MetaTools.h>
 #include "PointerMath.h"
-#include "../../Library/MyTools/MetaTools.h"
 
 #ifdef ALLOCATORS_EXPORTS
 #define ALLOCATOR_API DLL_EXPORT_API
