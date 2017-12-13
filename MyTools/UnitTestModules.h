@@ -94,8 +94,8 @@ inline void execute()
 	GetReady();
 	AddTestUnit();
 	RunTest();
-	Summary();
 	AfterTest();
+	Summary();
 }
 
 inline void testMain()
