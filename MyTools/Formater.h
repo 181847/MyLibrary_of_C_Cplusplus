@@ -12,6 +12,8 @@ public:
 	const char * format(const char * string);
 	const char * format(int i);
 
+	operator const char * () const;
+
 	bool operator ==(const char * compto);
 
 	char * bufferPointer();
@@ -67,4 +69,10 @@ template<int BufferSize>
 bool Formater<BufferSize>::operator == (const char * compto)
 {
 	return 0 == strcmp(buffer, compto);
+}
+
+template<int BufferSize>
+Formater<BufferSize>::operator const char * () const
+{
+	return buffer;
 }
