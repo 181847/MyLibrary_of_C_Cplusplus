@@ -12,6 +12,8 @@
 #define FT_EQ(fa, fb) (1e-5 > std::abs(fa - fb))
 #define NOT_EQ(a, b) (a != b)
 
+#define NO_ERROR(errorCount) EQ(0, errorCount)
+
 #define CHECK_ARR_2(arr, COMPARE, e0, e1)\
 	(COMPARE(arr[0], e0) && COMPARE(arr[1], e1))
 
