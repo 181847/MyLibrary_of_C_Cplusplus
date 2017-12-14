@@ -30,18 +30,27 @@
 
 extern std::vector<std::function<bool(std::string& unitName)>> testUnits;
 
-extern unsigned int totalCount;
-extern unsigned int	success;
+extern unsigned int gTestUnitCount;
+extern unsigned int	gSuccessCount;
 
-#define DECLARE_TEST_UNITS\
-	static std::vector<std::function<bool(std::string& unitName)>>\
-	testUnits;\
-	static unsigned int totalCount	= 0;\
-	static unsigned int	success		= 0;
 
-#define TEST_UNIT_START(UnitName) testUnits.push_back(std::move(\
-		[](std::string& unitName) -> bool {\
-			unitName = UnitName;
+// the marco start declare the units,
+// inside, the marco have declare an errorLogger,
+// which is used to log the error count inside the testUnit,
+// the user can use it to log the error count,
+// and return the errorLogger.conclusion(),
+// it will return true, if no error happened.
+#define DECLARE_TEST_UNITS											\
+	static std::vector<std::function<bool(std::string& unitName)>>	\
+	testUnits;														\
+	static unsigned int gTestUnitCount	= 0;						\
+	static unsigned int	gSuccessCount	= 0;
+
+#define TEST_UNIT_START(UnitName)			\
+	testUnits.push_back(std::move(			\
+		[](std::string& unitName) -> bool {	\
+			unitName = UnitName;			\
+	TestUnit::ErrorLogger errorLogger;		// for each testUnit have a errorLogger to help log the errorCount.
 
 #define TEST_UNIT_END }))
 
@@ -65,9 +74,9 @@ void AfterTest();
 // the only thing that you will concen about is the return 
 // of the lambda.
 // The return value should be a boolean, which indicate
-// whether the unit test success or not.
+// whether the unit test gSuccessCount or not.
 // For example:
-//		TEST_UNIT_START("a test will always success")
+//		TEST_UNIT_START("a test will always gSuccessCount")
 //			...do the job...
 //			return true
 //		TEST_UNIT_END
@@ -78,17 +87,17 @@ inline void RunTest()
 	for (auto & testUnit : testUnits)
 	{
 		bool result = testUnit(unitName);
-		success += result;
-		printf("\t%s\t\t\t%s\n", result ? "success" : "failed", unitName.c_str());
+		gSuccessCount += result;
+		printf("\t%s\t\t\t%s\n", result ? "gSuccessCount" : "failed", unitName.c_str());
 	}
 }
 
 inline void Summary()
 {
-	totalCount = testUnits.size();
+	gTestUnitCount = testUnits.size();
 	printf("Summarize:\n");
-	printf("TestCount\tsuccess\t\tfailed\n");
-	printf("%d\t\t%d\t\t%d\n", totalCount, success, totalCount - success);
+	printf("TestCount\tgSuccessCount\t\tfailed\n");
+	printf("%d\t\t%d\t\t%d\n", gTestUnitCount, gSuccessCount, gTestUnitCount - gSuccessCount);
 }
 
 inline void execute()
@@ -113,5 +122,70 @@ inline void testMain()
 
 	getchar();
 }
+
+struct ErrorLogger
+{
+private:
+	size_t _errorCount = 0;
+
+public:
+	ErrorLogger() : _errorCount(0) {}
+
+	inline bool conclusion()
+	{
+		return _errorCount == 0;
+	}
+
+	inline size_t getErrorCount() const
+	{
+		return _errorCount;
+	}
+
+	// errorCount increase by one
+	inline ErrorLogger& tick()
+	{
+		++_errorCount;
+		return *this;
+	}
+
+	// errorCount increase by one
+	inline ErrorLogger& operator ++ ()
+	{
+		++_errorCount;
+		return *this;
+	}
+
+	// errorCount increase by one,
+	// but return the logger after the increasment.
+	// it is same as the ++errorLogger;
+	inline ErrorLogger& operator ++ (int)
+	{
+		++_errorCount;
+		return *this;
+	}
+
+	// add specific error count.
+	inline ErrorLogger& addErrorCount(size_t newErrorCount)
+	{
+		_errorCount += newErrorCount;
+		return *this;
+	}
+
+	// add specific error count.
+	inline ErrorLogger& operator += (size_t newErrorCount)
+	{
+		_errorCount += newErrorCount;
+		return *this;
+	}
+
+	// if pass in a pointer,
+	// increase the _errorCount when the pointer is nullptr.
+	/*template<typename PointerType>
+	inline ErrorLogger& operator += (PointerType pointer)
+	{
+		_errorCount += (pointer == nullptr);
+		return *this;
+	}*/
+};
 
 }// namespace TestUnit
