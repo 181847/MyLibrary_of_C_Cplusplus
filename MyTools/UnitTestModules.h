@@ -4,13 +4,13 @@
 #include <vector>
 #include "MyAssert.h"
 
-#define EQ(a, b)	(a == b) 
-#define GT(a, b)	(a >  b)
-#define LE(a, b)	(a >  b)
-#define GT_EQ(a, b) (a >  b)
-#define LE_EQ(a, b) (a >  b)
-#define FT_EQ(fa, fb) (1e-5 > std::abs(fa - fb))
-#define NOT_EQ(a, b) (a != b)
+#define EQ(a, b)	((a) == (b)) 
+#define GT(a, b)	((a) >  (b))
+#define LE(a, b)	((a) >  (b))
+#define GT_EQ(a, b) ((a) >  (b))
+#define LE_EQ(a, b) ((a) >  (b))
+#define FT_EQ(fa, fb) (1e-5 > std::abs((fa) - (fb)))
+#define NOT_EQ(a, b) ((a) != (b))
 
 #define NO_ERROR(errorCount) EQ(0, errorCount)
 
@@ -88,7 +88,7 @@ inline void RunTest()
 	{
 		bool result = testUnit(unitName);
 		gSuccessCount += result;
-		printf("\t%s\t\t\t%s\n", result ? "gSuccessCount" : "failed", unitName.c_str());
+		printf("\t%s\t\t\t%s\n", result ? "success" : "failed", unitName.c_str());
 	}
 }
 
@@ -96,7 +96,7 @@ inline void Summary()
 {
 	gTestUnitCount = testUnits.size();
 	printf("Summarize:\n");
-	printf("TestCount\tgSuccessCount\t\tfailed\n");
+	printf("TestCount\tsuccess\t\tfailed\n");
 	printf("%d\t\t%d\t\t%d\n", gTestUnitCount, gSuccessCount, gTestUnitCount - gSuccessCount);
 }
 
