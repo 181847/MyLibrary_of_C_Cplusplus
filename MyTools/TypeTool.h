@@ -41,7 +41,7 @@ public:
 	template<typename TYPE>
 	inline static size_t newID()
 	{
-		static size_t idOfTheType = IDContainer(++distribID);
+		static size_t idOfTheType = IDContainer<TYPE>(++distribID);
 		return idOfTheType;
 	}
 
@@ -55,10 +55,10 @@ public:
 	// and push them to call newID() first,
 	// then getID(),
 	// rather than create ID all the time.
-	template<typename Type>
-	inline static size_t getID(size_t )
+	template<typename TYPE>
+	inline static size_t getID()
 	{
-		static size_t idOfTheType = IDContainer(0);
+		static size_t idOfTheType = IDContainer<TYPE>(0);
 		return idOfTheType;
 	}
 };
