@@ -186,6 +186,13 @@ public:
 		_errorCount += (pointer == nullptr);
 		return *this;
 	}*/
+
+	template<typename T1, typename T2>
+	inline ErrorLogger& LogIfNotEq(const T1& t1, const T2& t2)
+	{
+		addErrorCount(t1 != t2);
+		return *this;
+	}
 };
 
 }// namespace TestUnit
