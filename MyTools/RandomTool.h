@@ -49,7 +49,7 @@ randomNumbers(
 	size_t length, NumberType min, NumberType max)
 {
 	NumberType range = max - min;
-	srand(seed);
+	srand(_seed);
 
 	this->clear();
 	this->resize(length);
