@@ -187,10 +187,19 @@ public:
 		return *this;
 	}*/
 
+	// log one error if not equal
 	template<typename T1, typename T2>
 	inline ErrorLogger& LogIfNotEq(const T1& t1, const T2& t2)
 	{
 		addErrorCount(t1 != t2);
+		return *this;
+	}
+
+	// log one error if equal
+	template<typename T1, typename T2>
+	inline ErrorLogger& LogIfEq(const T1& t1, const T2& t2)
+	{
+		addErrorCount(t1 == t2);
 		return *this;
 	}
 };
