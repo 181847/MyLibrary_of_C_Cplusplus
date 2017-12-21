@@ -31,6 +31,10 @@ public:
 	}
 };
 
+#ifdef _DEBUG
+#define TOGGLE_ALL_DEBUG_MESSAGE
+#define USE_SYS_ASSERT
+#endif
 
 #ifdef TOGGLE_ALL_DEBUG_MESSAGE
 #define ASSERTIONS_ENABLED
