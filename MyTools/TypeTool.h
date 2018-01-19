@@ -104,7 +104,7 @@ struct TypeContainer<LAST>
 //			IsAllOf< TypeContainer<void, double, int>						>::value	=> false
 //			IsAllOf<									int, float, double	>::value	=> compile error
 template<typename ...CHECK_ARGS>
-struct IsAllOf { static_assert(false, "Please use IsAllOf with TypeContainer."); };
+struct IsAllOf {};
 //||||||||||||||||||||||||||||||||||||||||||||||||||
 template<typename ...TYPE_LIST>
 struct IsAllOf<TypeContainer<>, TYPE_LIST...>
