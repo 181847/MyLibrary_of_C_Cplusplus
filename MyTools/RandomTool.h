@@ -4,52 +4,70 @@
 // this head file declare some useful function
 // to generate the random numbers
 
+// Declarations 
 namespace RandomTool
 {
 
-// for general randome numbers
-template<typename NumberType>
+// for general randome numbers, the NumberType must be an Interger Type, char, bool, int, wchar, etc.
+template<typename NumberType = size_t>
 class RandomSet
 	:public std::vector<NumberType>
 {
+	static_assert(std::is_integral<NumberType>::value, "The NumberType must be an Integral, such as char, bool, int...");
+
 public:
 	// set seed
 	void setSeed(int newSeed);
 	// add one to the seed
 	void tickSeed();
 
-	void randomNumbers(size_t length, NumberType min, NumberType max);
-	void randomSequence(size_t length, int offset = 0);
+	// Generate random number range from min to max;
+	void RandomNumbers(size_t length, NumberType min, NumberType max);
+
+	// Generate random permutation range from 0 to length - 1 
+	void RandomSequence(size_t length, int offset = 0);
 
 private:
 	// the seed used to rand
-	int _seed;
+	int m_seed;
 };
 
-template<typename NumberType>
-void
-RandomSet<NumberType>::
-setSeed(int newSeed)
+// the function definations
+namespace Func 
 {
-	_seed = newSeed;
+
+// Try to shuffle the elements inside the vector.
+template<typename NumberType>
+void Shuffle(std::vector<NumberType>& toBeShuffled, int seed = 0);
+
+}// namespace Func
+
+}// namespace RandomTools
+
+
+// Definations
+namespace RandomTool
+{
+
+#pragma region RandomSet definations
+
+template<typename NumberType>
+void RandomSet<NumberType>::setSeed(int newSeed)
+{
+	m_seed = newSeed;
 }
 
 template<typename NumberType>
-void 
-RandomSet<NumberType>::
-tickSeed()
+void RandomSet<NumberType>::tickSeed()
 {
-	++_seed;
+	++m_seed;
 }
 
 template<typename NumberType>
-void 
-RandomSet<NumberType>::
-randomNumbers(
-	size_t length, NumberType min, NumberType max)
+void RandomSet<NumberType>::RandomNumbers(size_t length, NumberType min, NumberType max)
 {
 	NumberType range = max - min;
-	srand(_seed);
+	srand(m_seed);
 
 	this->clear();
 	this->resize(length);
@@ -60,12 +78,9 @@ randomNumbers(
 }
 
 template<typename NumberType>
-void 
-RandomSet<NumberType>::
-randomSequence
-(size_t length, int offset)
+void RandomSet<NumberType>::RandomSequence(size_t length, int offset)
 {
-	srand(_seed);
+	srand(m_seed);
 	this->clear();
 	this->resize(length);
 	for (NumberType i = 0; i < length; ++i)
@@ -73,11 +88,18 @@ randomSequence
 		this->operator[](i) = i;
 	}
 
+	// Switch random elements.
 	for (size_t i = 0; i < length; ++i)
 	{
 		size_t randIndex = rand() % length;
 
 		std::swap(this->operator[](i), this->operator[](randIndex));
+	}
+
+	// If no offset is setted, just return to avoid more calculations.
+	if (offset == 0)
+	{
+		return;
 	}
 
 	for (auto & randomNumber : *this)
@@ -86,47 +108,36 @@ randomSequence
 	}
 }
 
+#pragma endregion RandomSet definations
 
-// this function to generate the random order of 0~(length-1)
-template<typename T>
-inline void RandomSequence(size_t length, std::vector<T> * psequence, unsigned int seed = 1)
+
+namespace Func
 {
-	auto & sequence = *psequence;
+
+#pragma region Function definations
+
+template<typename NumberType>
+void Shuffle(std::vector<NumberType>& toBeShuffled, int seed)
+{
 	srand(seed);
-	sequence.clear();
-	sequence.resize(length);
-	for (size_t i = 0; i < length; ++i)
-	{
-		sequence[i] = i;
-	}
 	
-	for (size_t i = 0; i < length; ++i)
+	int length = toBeShuffled.size();
+
+	assert(length > 0 && "vector should not be empty.");
+
+	// Switch random elements.
+	for (int i = 0; i < length; ++i)
 	{
 		int randIndex = rand() % length;
-		
-		std::swap(sequence[i], sequence[randIndex]);
+
+		std::swap(toBeShuffled[i], toBeShuffled[randIndex]);
 	}
 }
 
-template<typename T>
-inline void RandomNumbers(
-	size_t length,
-	std::vector<T> * pcontainer,
-	T max,
-	T min = 0,
-	unsigned int seed = 1)
-{
-	auto & container = *pcontainer;
-	srand(seed);
-	
-	container.clear();
-	container.resize(length);
-	for (size_t i = 0; i < length; ++i)
-	{
-		container[i] = MathTool::clamp<T>(rand() % max, min, max);
-	}
-}
+#pragma endregion
 
+}// namespace Func
 
-}// namespace randomTools
+}// namespace RandomTool
+
 
