@@ -123,5 +123,4 @@ struct IsAllOf<TypeContainer<TYPE_LIST_ALL...>, TYPE_LIST...>
 	};
 };
 
-
 } // namespace TypeTool
