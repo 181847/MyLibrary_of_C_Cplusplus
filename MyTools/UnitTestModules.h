@@ -200,6 +200,26 @@ public:
 		addErrorCount(t1 == t2);
 		return *this;
 	}
+
+	// log one error if the argument is false
+	inline ErrorLogger& LogIfFalse(bool falseMeansOneError)
+	{
+		if (false == falseMeansOneError)
+		{
+			++_errorCount;
+		}
+		return *this;
+	}
+
+	// log one error if the argument is true
+	inline ErrorLogger& LogIfTrue(bool trueMeansOneError)
+	{
+		if (true == trueMeansOneError)
+		{
+			++_errorCount;
+		}
+		return *this;
+	}
 };
 
 }// namespace TestUnit
