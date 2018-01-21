@@ -1,6 +1,8 @@
 #pragma once
 #include <vector>
+#include <array>
 #include "MathTool.h"
+#include "TypeTool.h"
 // this head file declare some useful function
 // to generate the random numbers
 
@@ -39,6 +41,28 @@ namespace Func
 // Try to shuffle the elements inside the vector.
 template<typename NumberType>
 void Shuffle(std::vector<NumberType>& toBeShuffled, int seed = 0);
+
+// anynomous namespace for some useful tool
+namespace
+{
+
+// isOfVector is used inside the Dispatch() function,
+// to static_assert the Dispatch can only be used with std::vector.
+template<typename T>
+struct isOfVector { enum { value = false }; };
+//||||||||||||||||||||||||||||||||||||||||||
+template<typename T>
+struct isOfVector<std::vector<T>>
+{
+	enum { value = true };
+};
+
+}
+// Dispatch the Number to other vector.
+// The vector must have the size,
+// the origianl size must equal to the sum of the branches' size.
+template<typename ARRAY, typename ...OTHER_ARRAY_LIST>
+void Dispatch(ARRAY& original, OTHER_ARRAY_LIST& ...branches);
 
 }// namespace Func
 
@@ -132,6 +156,54 @@ void Shuffle(std::vector<NumberType>& toBeShuffled, int seed)
 
 		std::swap(toBeShuffled[i], toBeShuffled[randIndex]);
 	}
+}
+
+template<typename ARRAY, typename ...OTHER_ARRAY_LIST>
+void Dispatch(ARRAY& original, OTHER_ARRAY_LIST& ...branches)
+{
+	static_assert(TypeTool::IsAllOf<TypeTool::TypeContainer<OTHER_ARRAY_LIST...>, ARRAY>::value,
+		"Other OTHER_ARRAY_LIST type do not match with orignal");
+
+	static_assert(isOfVector<ARRAY>::value, "ARRAY must be as vector.");
+
+	static_assert(sizeof...(branches) > 0, "branches not enough");
+
+	const int numBranches = sizeof...(branches);
+
+	// Get the step size for each branch.
+	int branchCount = 0;
+	std::array<int, numBranches> stepList =
+	{
+		(branchCount += branches.size(), branchCount)...
+	};
+
+	assert(stepList[numBranches - 1] == original.size() &&
+		"Total branches capacity not match with original.");
+
+	// Helper function to push numbers in the orignal to oneBranch from 'from' to 'to'.
+	auto PushNumberFunc = [&original](ARRAY& oneBranch, int from, int to) -> int
+	{
+		assert(from < to && "internal error");
+		oneBranch.clear();
+		for (int index = from; index < to; ++index)
+		{
+			oneBranch.push_back(original[index]);
+		}
+		return 0;
+	};
+
+	// Foreach step, push the numbers to specific branch.
+	int phase = 0;
+	int index = 0;
+	// unpack
+	stepList = 
+	{
+		(
+			PushNumberFunc(branches, index, stepList[phase]),	// push number from original to each branch.
+			index = stepList[phase],							// update index to the next position.
+			++phase												// move to next phase.
+		)...	// unpack the operation of branches.
+	};
 }
 
 #pragma endregion
