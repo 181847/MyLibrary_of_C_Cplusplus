@@ -52,7 +52,9 @@ extern unsigned int	gSuccessCount;
 			unitName = UnitName;			\
 	TestUnit::ErrorLogger errorLogger;		// for each testUnit have a errorLogger to help log the errorCount.
 
-#define TEST_UNIT_END }))
+#define TEST_UNIT_END \
+		return errorLogger.conclusion(); \
+	}))
 
 namespace TestUnit 
 {
@@ -178,14 +180,10 @@ public:
 		return *this;
 	}
 
-	// if pass in a pointer,
-	// increase the _errorCount when the pointer is nullptr.
-	/*template<typename PointerType>
-	inline ErrorLogger& operator += (PointerType pointer)
+	inline ErrorLogger& LogError(size_t errorCount)
 	{
-		_errorCount += (pointer == nullptr);
-		return *this;
-	}*/
+		_errorCount += errorCount;
+	}
 
 	// log one error if not equal
 	template<typename T1, typename T2>
