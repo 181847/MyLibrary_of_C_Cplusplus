@@ -2,7 +2,43 @@
 #include <functional>
 #include <string>
 #include <vector>
+#include <exception>
 #include "MyAssert.h"
+
+//---------------------------------------------------------------------------------
+// A simple example to use this modules.
+/*---------------------------------------------------------------------------------
+
+#include <MyTools\RandomTool.h>
+#include <MyTools\UnitTestModules.h>
+
+DECLARE_TEST_UNITS;
+
+namespace TestUnit
+{
+void GetReady() {}
+void AfterTest() {}
+
+void AddTestUnit()
+{
+#pragma region Try the testUnit
+	TEST_UNIT_START("a test always success")
+		return true;
+	TEST_UNIT_END;
+#pragma endregion
+
+}// AddTestUnit()
+
+}// namespace TestUnit
+
+int main()
+{
+	TestUnit::testMain();
+	return 0;
+}
+
+*///------------------------------------------------------------
+
 
 #define EQ(a, b)	((a) == (b)) 
 #define GT(a, b)	((a) >  (b))
@@ -90,16 +126,16 @@ inline void RunTest()
 	{
 		bool result = testUnit(unitName);
 		gSuccessCount += result;
-		printf("\t%s\t\t\t%s\n", result ? "success" : "failed", unitName.c_str());
+		std::printf("\t%s\t\t\t%s\n", result ? "success" : "failed", unitName.c_str());
 	}
 }
 
 inline void Summary()
 {
 	gTestUnitCount = testUnits.size();
-	printf("Summarize:\n");
-	printf("TestCount\tsuccess\t\tfailed\n");
-	printf("%d\t\t%d\t\t%d\n", gTestUnitCount, gSuccessCount, gTestUnitCount - gSuccessCount);
+	std::printf("Summarize:\n");
+	std::printf("TestCount\tsuccess\t\tfailed\n");
+	std::printf("%d\t\t%d\t\t%d\n", gTestUnitCount, gSuccessCount, gTestUnitCount - gSuccessCount);
 }
 
 inline void execute()
@@ -117,12 +153,12 @@ inline void testMain()
 	{
 		execute();
 	}
-	catch (SimpleException & e)
+	catch (std::exception & e)
 	{
-		fprintf(stderr, "ERROR:%s", e.ToString().c_str());
+		std::fprintf(stderr, "ERROR:%s", e.what());
 	}
 
-	getchar();
+	std::getchar();
 }
 
 struct ErrorLogger
@@ -144,10 +180,9 @@ public:
 	}
 
 	// errorCount increase by one
-	inline ErrorLogger& tick()
+	inline void tick()
 	{
 		++_errorCount;
-		return *this;
 	}
 
 	// errorCount increase by one
@@ -167,10 +202,9 @@ public:
 	}
 
 	// add specific error count.
-	inline ErrorLogger& addErrorCount(size_t newErrorCount)
+	inline void addErrorCount(size_t newErrorCount)
 	{
 		_errorCount += newErrorCount;
-		return *this;
 	}
 
 	// add specific error count.
@@ -180,45 +214,91 @@ public:
 		return *this;
 	}
 
-	inline ErrorLogger& LogError(size_t errorCount)
+	inline void LogError(size_t errorCount)
 	{
 		_errorCount += errorCount;
 	}
 
 	// log one error if not equal
 	template<typename T1, typename T2>
-	inline ErrorLogger& LogIfNotEq(const T1& t1, const T2& t2)
+	inline void LogIfNotEq(const T1& t1, const T2& t2)
 	{
 		addErrorCount(t1 != t2);
-		return *this;
 	}
+
+#pragma region specialization
+	// ||||||||||||||||||||||||||||||||||||||||||
+	// specialization for float
+	template<>
+	inline void LogIfNotEq<float, float>(const float& t1, const float& t2)
+	{
+		if (fabs(t1 - t2) > 1e-8f)
+		{
+			// nearly not equal
+			addErrorCount(true);
+		}
+	}
+	// ||||||||||||||||||||||||||||||||||||||||||
+	// specialization for double
+	template<>
+	inline void LogIfNotEq<double, double>(const double& t1, const double& t2)
+	{
+		if (abs(t1 - t2) > 1e-8)
+		{
+			// nearly not equal
+			addErrorCount(true);
+		}
+	}
+#pragma endregion
 
 	// log one error if equal
 	template<typename T1, typename T2>
-	inline ErrorLogger& LogIfEq(const T1& t1, const T2& t2)
+	inline void LogIfEq(const T1& t1, const T2& t2)
 	{
 		addErrorCount(t1 == t2);
-		return *this;
 	}
 
+#pragma region specialization
+	// ||||||||||||||||||||||||||||||||||||||||||
+	// specialization for float
+	template<>
+	inline void LogIfEq<float, float>(const float& t1, const float& t2)
+	{
+		if (fabs(t1 - t2) < 1e-8f)
+		{
+			// nearly equal
+			addErrorCount(true);
+		}
+	}
+	// ||||||||||||||||||||||||||||||||||||||||||
+	// specialization for double
+	template<>
+	inline void LogIfEq<double, double>(const double& t1, const double& t2)
+	{
+		if (abs(t1 - t2) < 1e-8)
+		{
+			// nearly equal
+			addErrorCount(true);
+		}
+	}
+#pragma endregion
+
 	// log one error if the argument is false
-	inline ErrorLogger& LogIfFalse(bool falseMeansOneError)
+	inline void LogIfFalse(bool falseMeansOneError)
 	{
 		if (false == falseMeansOneError)
 		{
 			++_errorCount;
 		}
-		return *this;
 	}
 
 	// log one error if the argument is true
-	inline ErrorLogger& LogIfTrue(bool trueMeansOneError)
+	inline void LogIfTrue(bool trueMeansOneError)
 	{
 		if (true == trueMeansOneError)
 		{
 			++_errorCount;
 		}
-		return *this;
 	}
 };
 
