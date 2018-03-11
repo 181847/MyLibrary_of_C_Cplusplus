@@ -31,6 +31,9 @@ public:
 template<typename Series>
 size_t IDGenerator<Series>::m_distribID = 0;
 
+
+
+
 // BoolCondition used to return the bool based on the CONDITION value.
 template<bool CONDITION, bool THEM, bool ELSE>
 struct BoolCondition{};
@@ -46,6 +49,9 @@ struct BoolCondition<false, THEN, ELSE>
 {
 	enum { value = ELSE };
 };
+
+
+
 
 // struct IsOneOf is used to check whether a type is in the list of types.
 // the first parameter is the type to be checked, rest are the typeList.
@@ -72,6 +78,8 @@ struct IsOneOf<TYPE>
 };
 
 
+
+
 // TypeContainer to have a set of type to be checked.
 template<typename ...TYPE_LIST>
 struct TypeContainer{};
@@ -93,6 +101,8 @@ struct TypeContainer<LAST>
 	typedef LAST firstType;
 	typedef TypeContainer<> restTypeContainer;
 };
+
+
 
 
 // IsAllOf is the extension of IsOneOf, 
@@ -121,6 +131,44 @@ struct IsAllOf<TypeContainer<TYPE_LIST_ALL...>, TYPE_LIST...>
 		value = IsOneOf<TYPE_CONTAINER::firstType, TYPE_LIST...>::value 
 		&& IsAllOf<TYPE_CONTAINER::restTypeContainer, TYPE_LIST...>::value
 	};
+};
+
+
+
+
+/*!
+	\brief in the TYPE_LIST, get one type whose size equal to TYPE_SIZE
+	\param TYPE_SIZE the size of the expected type
+	\param TYPE_LIST... where to selected the type
+	\usage	GetTypeBySize<8>::type								=> compile error
+			GetTypeBySize<4, char, short, int, long>::type		=> int
+			GetTypeBySize<13, char, short, int, long>::type		=> compile error, no type whose size is 13
+*/
+template<unsigned int TYPE_SIZE, typename ...TYPE_LIST>
+struct GetTypeBySize
+{
+	typedef GetTypeBySize<TYPE_SIZE, TypeTool::TypeContainer<TYPE_LIST...>>::type type;
+};
+//||||||||| no type provided ||||||||||||
+template<unsigned int TYPE_SIZE>
+struct GetTypeBySize<TYPE_SIZE>
+{
+	static_assert(false, "Please provide some type to choose");
+};
+//|||||||||| type container is empty |||||||||||||||||||||
+template<unsigned int TYPE_SIZE>
+struct GetTypeBySize<TYPE_SIZE, TypeTool::TypeContainer<>>
+{
+	static_assert(false, "No expected type whose size is TYPE_SIZE.");
+};
+//||||||||||| try to get one type that satisfies the TYPE_SIZE ||||||||||||||||||||||||||
+template<unsigned int TYPE_SIZE, typename ...TYPE_LIST>
+struct GetTypeBySize<TYPE_SIZE, TypeTool::TypeContainer<TYPE_LIST...>>
+{
+	typedef TypeTool::TypeContainer<TYPE_LIST...> M_TypeContainer;
+	typedef std::conditional<TYPE_SIZE == sizeof(M_TypeContainer::firstType),
+		M_TypeContainer::firstType,
+		GetTypeBySize<TYPE_SIZE, M_TypeContainer::restTypeContainer>::type>::type type;
 };
 
 } // namespace TypeTool
