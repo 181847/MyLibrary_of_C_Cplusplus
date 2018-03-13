@@ -1,5 +1,5 @@
 #pragma once
-
+#include <type_traits>
 
 namespace TypeTool
 {
@@ -89,8 +89,8 @@ struct TypeContainer{};
 template<typename FIRST, typename ...REST>
 struct TypeContainer<FIRST, REST...>
 {
-	typedef FIRST firstType;
-	typedef TypeContainer<REST...> restTypeContainer;
+	typedef typename FIRST firstType;
+	typedef typename TypeContainer<REST...> restTypeContainer;
 };
 //||||||||||||||||||||||||||||||||||||||||||||||||||
 // If there is only one type left, 
@@ -99,7 +99,7 @@ template<typename LAST>
 struct TypeContainer<LAST>
 {
 	typedef LAST firstType;
-	typedef TypeContainer<> restTypeContainer;
+	typedef typename TypeContainer<> restTypeContainer;
 };
 
 
@@ -139,36 +139,44 @@ struct IsAllOf<TypeContainer<TYPE_LIST_ALL...>, TYPE_LIST...>
 /*!
 	\brief in the TYPE_LIST, get one type whose size equal to TYPE_SIZE
 	\param TYPE_SIZE the size of the expected type
-	\param TYPE_LIST... where to selected the type
+	\param TYPE_LIST... where to selected the type, or can use a TypeContainer to obtain a set of types
 	\usage	GetTypeBySize<8>::type								=> compile error
 			GetTypeBySize<4, char, short, int, long>::type		=> int
-			GetTypeBySize<13, char, short, int, long>::type		=> compile error, no type whose size is 13
+			GetTypeBySize<13, char, short, int, long>::type		=> void, no type whose size is 13
+			GetTypeBySize<4, TypeContainer<char, int>>::type	=> int
+			GetTypeBySize<4, TypeContainer<>>::type				=> void
+			GetTypeBySize<13, TypeContainer<char, long>>::type	=> void
 */
 template<unsigned int TYPE_SIZE, typename ...TYPE_LIST>
 struct GetTypeBySize
 {
-	typedef GetTypeBySize<TYPE_SIZE, TypeTool::TypeContainer<TYPE_LIST...>>::type type;
+	typedef typename GetTypeBySize<TYPE_SIZE, TypeTool::TypeContainer<TYPE_LIST...>>::type type;
 };
 //||||||||| no type provided ||||||||||||
 template<unsigned int TYPE_SIZE>
 struct GetTypeBySize<TYPE_SIZE>
 {
-	static_assert(false, "Please provide some type to choose");
+	//static_assert(false, "Please provide some type to choose");
 };
 //|||||||||| type container is empty |||||||||||||||||||||
 template<unsigned int TYPE_SIZE>
 struct GetTypeBySize<TYPE_SIZE, TypeTool::TypeContainer<>>
 {
-	static_assert(false, "No expected type whose size is TYPE_SIZE.");
+	// no compile error, but return void as the wrong signal.
+	typedef void type;
 };
 //||||||||||| try to get one type that satisfies the TYPE_SIZE ||||||||||||||||||||||||||
 template<unsigned int TYPE_SIZE, typename ...TYPE_LIST>
 struct GetTypeBySize<TYPE_SIZE, TypeTool::TypeContainer<TYPE_LIST...>>
 {
-	typedef TypeTool::TypeContainer<TYPE_LIST...> M_TypeContainer;
-	typedef std::conditional<TYPE_SIZE == sizeof(M_TypeContainer::firstType),
-		M_TypeContainer::firstType,
-		GetTypeBySize<TYPE_SIZE, M_TypeContainer::restTypeContainer>::type>::type type;
-};
+	typedef typename TypeTool::TypeContainer<TYPE_LIST...> M_TypeContainer;
 
+	typedef typename std::conditional<TYPE_SIZE == sizeof(typename M_TypeContainer::firstType),
+		typename M_TypeContainer::firstType,
+		typename GetTypeBySize<TYPE_SIZE, typename M_TypeContainer::restTypeContainer
+		>::type
+	>::type type;
+
+	//static_assert(TYPE_SIZE == sizeof(type));
+};
 } // namespace TypeTool
