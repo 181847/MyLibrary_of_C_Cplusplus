@@ -5,6 +5,10 @@
 
 namespace MathTool
 {
+
+const double PI  =3.141592653589793238463;
+const float  PI_F=3.14159265358979f;
+	
 template<typename T>
 inline T clamp(const T& target, const T& min, const T& max)
 {
