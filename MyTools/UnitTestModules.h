@@ -14,15 +14,17 @@
 
 /*!
 	\brief MACRO HELP TO USE THIS MODULE 
+    start module declaration
 */
 #define TEST_MODULE_START \
 	namespace TestUnit\
 	{\
-		void AddTestUnit(std::vector<std::function<unsigned int(std::string& unitName)>>& appendToQuery)\
+		void AddTestUnit(std::vector<std::function<unsigned int(std::string& unitName, TimeCounter&)>>& appendToQuery)\
 		{
 
 /*!
 	\brief MACRO HELP TO USE THIS MODULE 
+    end module declaration
 */
 #define TEST_MODULE_END \
 		}\
@@ -34,22 +36,17 @@
 	}\
 
 /*!
-	\brief start an lambda and push it into the test query in which to run the target codes
-	the lambda need a string argument as the name of the unit.
-	return an int value for how many error has been recorded inside the test.
-	There for, in the tested code, you can return an integer manully for num errors.
-	However, for convenience, this macro also declare an special class 'ErrorLogger' who will help user to record errors,
-	and return error number at the end of lambda.
+	\brief start a unit test.
 */
 #define TEST_UNIT_START(UnitName)			\
 	appendToQuery.push_back(std::move(			\
-		[](std::string& unitName) -> unsigned int {	\
+		[](std::string& unitName, TimeCounter& timeCounter) -> unsigned int {	\
 			unitName = UnitName;			\
 	TestUnit::ErrorLogger errorLogger;		// for each testUnit have a errorLogger to help log the errorCount.
+    
 
 /*!
-	\brief stop declare an test unit
-	enclose the lambda delcared by marco 'TEST_UNIT_START'.
+	\brief stop a unit test.
 */
 #define TEST_UNIT_END \
 		return errorLogger.conclusion(); \
@@ -57,6 +54,8 @@
 
 namespace TestUnit 
 {
+
+
 	/*!
 		\brief which unit to measure time elapsed.
 	*/
@@ -65,97 +64,9 @@ namespace TestUnit
 	/*!
 		\brief give the time unit a name to be printed in the output, e.g. "microseconds" or "seconds"...
 	*/
-	const std::string DURATION_TYPE_NAME = "microseconds";
+	const std::string DURATION_TYPE_NAME = "ms";
 
-/*!
-	\brief store brief test result such as test number and success number.
-*/
-struct TestResult
-{
-	unsigned int m_countTests = 0;
-	unsigned int m_countSuccess = 0;
-};
-
-/*!
-	\brief add test units into the array
-	\param appendToQuery append the test units into this array
-*/
-void AddTestUnit(std::vector<std::function<unsigned int(std::string& unitName)>>& appendToQuery);
-
-/*!
-	\brief run unit tests in the array'testUnits'
-	\param testUnits test to be run
-	\param result return brief result
-*/
-inline void RunTest(std::vector<std::function<unsigned int(std::string& unitName)>>& testUnits, TestResult& result)
-{
-	std::string		unitName;
-	unsigned int	errorCount;
-	bool			isSuccess = false;
-	DurationType	countTime;
-
-	for (auto & testUnit : testUnits)
-	{
-		errorCount = 0;
-		try 
-		{
-			auto startTimePoint = std::chrono::system_clock::now();
-			errorCount = testUnit(unitName);
-			auto endTimePoint = std::chrono::system_clock::now();
-
-			countTime = std::chrono::duration_cast<DurationType>(endTimePoint - startTimePoint);
-		}
-		catch (std::exception e)
-		{
-			std::cout << "\t" << unitName << "exception happend: " << e.what() << std::endl;
-			continue;
-		}
-
-		isSuccess = ( errorCount == 0 );
-		if (isSuccess)
-		{
-			++result.m_countSuccess;
-		}
-
-		std::printf(
-			// success/failed	errorCount	costTime   unitName
-			"\t%s"              "\t%d"      "\t%s:%8lld"  "\t\t%s\n", 
-			isSuccess ? "success" : "failed", 
-			errorCount, 
-			DURATION_TYPE_NAME.c_str(), countTime.count(), 
-			unitName.c_str());
-	}
-}
-
-/*!
-	\brief show result in the console
-	\param result the brief result returned by RunTest.
-*/
-inline void Summary(const TestResult& result)
-{
-	std::printf("Summarize:\n");
-	std::printf("TestCount\tsuccess\t\tfailed\n");
-	std::printf("%d\t\t%d\t\t%d\n", result.m_countTests, result.m_countSuccess, result.m_countTests - result.m_countSuccess);
-}
-
-/*!
-	\brief core function in which to add user-defined tests -> run them -> show summary
-	may be we can 
-*/
-inline void execute()
-{
-	std::vector<std::function<unsigned int(std::string& unitName)>> testUnitQuery;
-	AddTestUnit(testUnitQuery);
-
-	TestResult result;
-	result.m_countTests = testUnitQuery.size();
-	RunTest(testUnitQuery, result);
-
-	Summary(result);
-
-	// wait for user enter.
-	std::getchar();
-}
+    
 
 /*!
 	\brief a light struct to help record error count.
@@ -300,5 +211,145 @@ public:
 		}
 	}
 };
+
+/*!
+    \brief TimeCounter used to record time for the test.
+    each unit test will have one TimeCounter inside it,
+    user can reuse it in the code to accumulate the expected time to be recored.
+    For example, in one test, you may do some calculations, then write the result into the local file.
+    What you concen about is how many time it costs to calculate the result,
+    rather than writing result to the local file(writing will be slow if the result is large such as 2GB).
+*/
+class TimeCounter
+{
+public:
+    /*!
+        \brief the sum of the time that have been recorded.
+    */
+    DurationType m_sumDuration = DurationType::zero();
+};
+
+/*!
+    \brief use RAII to record a period of time and add them to TimeCounter.
+*/
+struct TimeGuard
+{
+private:
+    TimeCounter& m_tarteTimeCounter;
+    std::chrono::system_clock::time_point m_startTimePoint;
+
+public:
+    TimeGuard(TimeCounter& addTo)
+        :m_tarteTimeCounter(addTo)
+    {
+        m_startTimePoint = std::chrono::system_clock::now();
+    }
+
+    ~TimeGuard()
+    {
+        auto endTimePoint = std::chrono::system_clock::now();
+
+        m_tarteTimeCounter.m_sumDuration += std::chrono::duration_cast<DurationType>(endTimePoint - m_startTimePoint);
+    }
+};
+
+/*!
+	\brief store brief test result such as test number and success number.
+*/
+struct TestResult
+{
+	unsigned int m_countTests = 0;
+	unsigned int m_countSuccess = 0;
+};
+
+/*!
+	\brief add test units into the array
+	\param appendToQuery append the test units into this array
+*/
+void AddTestUnit(std::vector<std::function<unsigned int(std::string& unitName, TimeCounter&)>>& appendToQuery);
+
+/*!
+    \brief print a progress percentage into the screen(same line).
+    \param progress a number between 0.0f and 1.0f which will be interpret to 0% to 100%.
+    this is for some long term test to show some information to user.
+*/
+inline void ShowProgress(const float progress)
+{
+    std::printf("Progress: %.6f%%\r", progress * 100.0f);
+}
+
+/*!
+	\brief run unit tests in the array'testUnits'
+	\param testUnits test to be run
+	\param result return brief result
+*/
+inline void RunTest(std::vector<std::function<unsigned int(std::string&, TimeCounter&)>>& testUnits, TestResult& result)
+{
+	std::string		unitName;
+	unsigned int	errorCount;
+	bool			isSuccess = false;
+
+	for (auto & testUnit : testUnits)
+	{
+		errorCount = 0;
+        TimeCounter insideCounter;
+        TimeCounter unitTimeCounter;
+		try 
+		{
+            TimeGuard guard(unitTimeCounter);
+			errorCount = testUnit(unitName, insideCounter);
+		}
+		catch (std::exception e)
+		{
+			std::cout << "\t" << unitName << "exception happend: " << e.what() << std::endl;
+			continue;
+		}
+
+		isSuccess = ( errorCount == 0 );
+		if (isSuccess)
+		{
+			++result.m_countSuccess;
+		}
+
+		std::printf(
+			// success/failed	errorCount	costTime   unitName
+			"\t%s"              "\t%d"      "\t%8lld %s"   "\t%8lld %s"  "\t\t%s\n", 
+			isSuccess ? "success" : "failed", 
+			errorCount, 
+            unitTimeCounter.m_sumDuration.count(), DURATION_TYPE_NAME.c_str(),
+            insideCounter.m_sumDuration.count(), DURATION_TYPE_NAME.c_str(),
+			unitName.c_str());
+	}
+}
+
+/*!
+	\brief show result in the console
+	\param result the brief result returned by RunTest.
+*/
+inline void Summary(const TestResult& result)
+{
+	std::printf("Summarize:\n");
+	std::printf("TestCount\tsuccess\t\tfailed\n");
+	std::printf("%d\t\t%d\t\t%d\n", result.m_countTests, result.m_countSuccess, result.m_countTests - result.m_countSuccess);
+}
+
+/*!
+	\brief core function in which to add user-defined tests -> run them -> show summary
+	may be we can 
+*/
+inline void execute()
+{
+	std::vector<std::function<unsigned int(std::string& unitName, TimeCounter&)>> testUnitQuery;
+	AddTestUnit(testUnitQuery);
+
+	TestResult result;
+	result.m_countTests = testUnitQuery.size();
+	RunTest(testUnitQuery, result);
+
+	Summary(result);
+
+	// wait for user enter.
+	std::getchar();
+}
 
 }// namespace TestUnit
