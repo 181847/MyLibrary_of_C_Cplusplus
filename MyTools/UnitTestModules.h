@@ -19,7 +19,7 @@
 #define TEST_MODULE_START \
 	namespace TestUnit\
 	{\
-		void AddTestUnit(std::vector<std::function<unsigned int(std::string& unitName, TimeCounter&)>>& appendToQuery)\
+		void AddTestUnit(std::vector<std::function<unsigned int(TestConfig& config, TestParameter&)>>& appendToQuery)\
 		{
 
 /*!
@@ -40,11 +40,12 @@
 */
 #define TEST_UNIT_START(UnitName)			\
 	appendToQuery.push_back(std::move(			\
-		[](std::string& unitName, TimeCounter& timeCounter) -> unsigned int {	\
-			unitName = UnitName;			\
+		[](TestConfig& testConfig, TestParameter& testParameter) -> unsigned int {	\
+	testConfig.m_testName = UnitName;			\
 	TestUnit::ErrorLogger errorLogger;		// for each testUnit have a errorLogger to help log the errorCount.
-    
 
+#define TIME_GUARD TimeGuard countTimeOfNextCodes(testParameter.m_timeCounter)
+    
 /*!
 	\brief stop a unit test.
 */
@@ -62,7 +63,7 @@ namespace TestUnit
 	using DurationType = std::chrono::microseconds;
 
 	/*!
-		\brief give the time unit a name to be printed in the output, e.g. "microseconds" or "seconds"...
+		\brief give the time unit a name to be printed in the output, e.g. "ms" and the out put may look like '... 45654 ms ...'
 	*/
 	const std::string DURATION_TYPE_NAME = "ms";
 
@@ -215,10 +216,18 @@ public:
 /*!
     \brief TimeCounter used to record time for the test.
     each unit test will have one TimeCounter inside it,
-    user can reuse it in the code to accumulate the expected time to be recored.
+    user can reuse it in the code to accumulate the expected time to be recored (NOT the time the whole testUnit costs).
     For example, in one test, you may do some calculations, then write the result into the local file.
     What you concen about is how many time it costs to calculate the result,
     rather than writing result to the local file(writing will be slow if the result is large such as 2GB).
+    Below is the case for using the timeCounter:
+    {
+        TimeGuard _dummy(timeCounter);
+
+        // the codes you want to count time on.
+    }// stop on counting
+
+    WARNING! If you use TimeCounter in cascaded, the overlaped duration time will be acummulated.
 */
 class TimeCounter
 {
@@ -230,7 +239,7 @@ public:
 };
 
 /*!
-    \brief use RAII to record a period of time and add them to TimeCounter.
+    \brief use RAII to record a period of time and add them to TimeCounter(argument of the constructor).
 */
 struct TimeGuard
 {
@@ -254,6 +263,41 @@ public:
 };
 
 /*!
+    \brief TestConfig used to 
+*/
+struct TestConfig
+{
+public:
+    std::string m_testName;
+    unsigned int m_loopTime = 1;
+};
+
+/*!
+    \brief the parameters passed into one unit test
+    the TestParameter used to pass information or help objects to the inside unit test.
+    For example, the m_timeCounter will be provided for user to counting time.
+*/
+struct TestParameter
+{
+public:
+    /*!
+        \brief time counter for the user.
+    */
+    TimeCounter m_timeCounter;
+
+    /*!
+        \brief one unit test can run multiple times, here will store the index of current running test.
+    */
+    unsigned int m_runningIndex;
+
+    TestParameter(unsigned int runningIndex = 0)
+        :m_runningIndex(runningIndex)
+    {
+        // empty
+    }
+};
+
+/*!
 	\brief store brief test result such as test number and success number.
 */
 struct TestResult
@@ -266,7 +310,7 @@ struct TestResult
 	\brief add test units into the array
 	\param appendToQuery append the test units into this array
 */
-void AddTestUnit(std::vector<std::function<unsigned int(std::string& unitName, TimeCounter&)>>& appendToQuery);
+void AddTestUnit(std::vector<std::function<unsigned int(TestConfig& config, TestParameter&)>>& appendToQuery);
 
 /*!
     \brief print a progress percentage into the screen(same line).
@@ -283,42 +327,75 @@ inline void ShowProgress(const float progress)
 	\param testUnits test to be run
 	\param result return brief result
 */
-inline void RunTest(std::vector<std::function<unsigned int(std::string&, TimeCounter&)>>& testUnits, TestResult& result)
+inline void RunTest(std::vector<std::function<unsigned int(TestConfig& , TestParameter&)>>& testUnits, TestResult& result)
 {
-	std::string		unitName;
-	unsigned int	errorCount;
-	bool			isSuccess = false;
+    result.m_countTests = 0;
 
 	for (auto & testUnit : testUnits)
 	{
-		errorCount = 0;
-        TimeCounter insideCounter;
-        TimeCounter unitTimeCounter;
-		try 
-		{
-            TimeGuard guard(unitTimeCounter);
-			errorCount = testUnit(unitName, insideCounter);
-		}
-		catch (std::exception e)
-		{
-			std::cout << "\t" << unitName << "exception happend: " << e.what() << std::endl;
-			continue;
-		}
+        bool			isSuccess                   = false;
+	    unsigned int	errorCountFor_THIS_unitTest;
+        bool            isFirstRun                  = true;
+        unsigned int    loopIndex                   = 1;  // current loop index.
+                                        /*!
+            \brief for each unit test, we can run it multiple times.
+            This will be set according to the first setting result of TestConfig whose reference will be passed into the test unit.
+        */
+        unsigned int    numLoopTime                 = 1;
 
-		isSuccess = ( errorCount == 0 );
-		if (isSuccess)
-		{
-			++result.m_countSuccess;
-		}
 
-		std::printf(
-			// success/failed	errorCount	costTime   unitName
-			"\t%s"              "\t%d"      "\t%8lld %s"   "\t%8lld %s"  "\t\t%s\n", 
-			isSuccess ? "success" : "failed", 
-			errorCount, 
-            unitTimeCounter.m_sumDuration.count(), DURATION_TYPE_NAME.c_str(),
-            insideCounter.m_sumDuration.count(), DURATION_TYPE_NAME.c_str(),
-			unitName.c_str());
+        // start the loop of the unit test
+        // basically, the loop will only do once,
+        // but if the user modify the TestConfig(inside their test codes), the same test may be fired multiple times.
+        // the action of modifying is ONLY avaliable for the first time the test unit runs.
+        do
+        {
+            ++result.m_countTests;
+            errorCountFor_THIS_unitTest = 0;
+            TestConfig      testConfig;
+            TestParameter   testParameter;
+            TimeCounter     unitTimeCounter;    // count time of a whole test unit costs
+
+            try
+            {
+                TimeGuard guard(unitTimeCounter);
+
+                testParameter.m_runningIndex    = loopIndex;   // set loop index
+                errorCountFor_THIS_unitTest     = testUnit(testConfig, testParameter);
+                ++loopIndex;    // increament the loop index.
+            }
+            catch (std::exception e)
+            {
+                std::cout << "\t" << testConfig.m_testName << "exception happend: " << e.what() << std::endl;
+                continue;
+            }
+
+            isSuccess = (errorCountFor_THIS_unitTest == 0);
+            if (isSuccess)
+            {
+                ++result.m_countSuccess;
+            }
+
+            std::printf(
+                // success/failed	errorCount	costTime   unitName
+                "\t%s"              "\t%d"      "\t%8lld %s"   "\t%8lld %s"  "\t\t%s\n",
+                isSuccess ? "success" : "failed",
+                errorCountFor_THIS_unitTest,
+                unitTimeCounter.m_sumDuration.count(), DURATION_TYPE_NAME.c_str(),
+                testParameter.m_timeCounter.m_sumDuration.count(), DURATION_TYPE_NAME.c_str(),
+                testConfig.m_testName.c_str());
+
+            // if it's the first time that the test unit run,
+            // try to get loopTime config from the user codes.
+            if (isFirstRun)
+            {
+                isFirstRun = false;
+                // get desired loop time from the unit test.
+                // decreased by one, because we have already run it one time.
+                numLoopTime = testConfig.m_loopTime - 1;
+            }
+        } while ( (numLoopTime--) > 0);
+		
 	}
 }
 
@@ -339,11 +416,10 @@ inline void Summary(const TestResult& result)
 */
 inline void execute()
 {
-	std::vector<std::function<unsigned int(std::string& unitName, TimeCounter&)>> testUnitQuery;
+	std::vector<std::function<unsigned int(TestConfig&, TestParameter&)>> testUnitQuery;
 	AddTestUnit(testUnitQuery);
 
 	TestResult result;
-	result.m_countTests = testUnitQuery.size();
 	RunTest(testUnitQuery, result);
 
 	Summary(result);
