@@ -65,7 +65,7 @@ namespace TestUnit
 	/*!
 		\brief give the time unit a name to be printed in the output, e.g. "ms" and the out put may look like '... 45654 ms ...'
 	*/
-	const std::string DURATION_TYPE_NAME = "ms";
+	const char DURATION_TYPE_NAME[] = "ms";
 
     
 
@@ -336,12 +336,14 @@ inline void RunTest(std::vector<std::function<unsigned int(TestConfig& , TestPar
         bool			isSuccess                   = false;
 	    unsigned int	errorCountFor_THIS_unitTest;
         bool            isFirstRun                  = true;
-        unsigned int    loopIndex                   = 1;  // current loop index.
-                                        /*!
+        unsigned int    loopIndex                   = 1;        // current loop index.
+        /*!
             \brief for each unit test, we can run it multiple times.
             This will be set according to the first setting result of TestConfig whose reference will be passed into the test unit.
         */
-        unsigned int    numLoopTime                 = 1;
+        unsigned int    numLoopTime                 = 1;        
+        TimeCounter     sumOuterUnitTime;                     // sum all the test run time.
+        TimeCounter     sumInnerUnitTime;                   // sum time recored by inside user's codes
 
 
         // start the loop of the unit test
@@ -381,8 +383,8 @@ inline void RunTest(std::vector<std::function<unsigned int(TestConfig& , TestPar
                 "\t%s"              "\t%d"      "\t%8lld %s"   "\t%8lld %s"  "\t\t%s\n",
                 isSuccess ? "success" : "failed",
                 errorCountFor_THIS_unitTest,
-                unitTimeCounter.m_sumDuration.count(), DURATION_TYPE_NAME.c_str(),
-                testParameter.m_timeCounter.m_sumDuration.count(), DURATION_TYPE_NAME.c_str(),
+                unitTimeCounter.m_sumDuration.count(), DURATION_TYPE_NAME,
+                testParameter.m_timeCounter.m_sumDuration.count(), DURATION_TYPE_NAME,
                 testConfig.m_testName.c_str());
 
             // if it's the first time that the test unit run,
@@ -394,7 +396,31 @@ inline void RunTest(std::vector<std::function<unsigned int(TestConfig& , TestPar
                 // decreased by one, because we have already run it one time.
                 numLoopTime = testConfig.m_loopTime - 1;
             }
+
+            sumOuterUnitTime.m_sumDuration += unitTimeCounter.m_sumDuration;
+            sumInnerUnitTime.m_sumDuration += testParameter.m_timeCounter.m_sumDuration;
         } while ( (numLoopTime--) > 0);
+
+        // if loop index greater than one,
+        // means that the same unit test have been run multiple times,
+        // out put a small information of those loop tests,
+        // for example, the average time costs by the each test.
+        if (loopIndex > 2)
+        {
+            // the unit test have run multiple times, output an average times
+            const auto sumOuter = sumOuterUnitTime.m_sumDuration.count();
+            const auto sumInner = sumInnerUnitTime.m_sumDuration.count();
+            std::printf(
+                "\t   LoopSummary:"
+                "\tSumOuter:%8lld %s"
+                "\tSumInner:%8lld %s"
+                "\tAveOuter:%8lld %s"
+                "\tAveInner:%8lld %s\n", 
+                sumOuter,               DURATION_TYPE_NAME,
+                sumInner,               DURATION_TYPE_NAME,
+                sumOuter / loopIndex,   DURATION_TYPE_NAME,
+                sumInner / loopIndex,   DURATION_TYPE_NAME);
+        }
 		
 	}
 }
