@@ -11,6 +11,21 @@
 |                                            |
 .********************************************/
 
+#ifdef WIN32
+/*!
+    \brief assert on the expr, increase errorCount if failed.
+    and put a break point if testParameter.m_breakIfTestAssertionFailed is true.
+    user can only use this marco inside the TEST_UNIT.
+*/
+#define TEST_ASSERT(expr) do {if ( ! (expr) ) {\
+            if (testParameter.m_breakIfTestAssertionFailed)\
+            {\
+                __debugbreak();\
+            }; \
+            errorLogger.LogError();\
+        }\
+    } while(0)
+#endif
 
 /*!
 	\brief MACRO HELP TO USE THIS MODULE 
@@ -65,7 +80,7 @@ namespace TestUnit
 	/*!
 		\brief give the time unit a name to be printed in the output, e.g. "ms" and the out put may look like '... 45654 ms ...'
 	*/
-	const char DURATION_TYPE_NAME[] = "ms";
+	const char DURATION_TYPE_NAME[] = "us";
 
     
 
@@ -125,14 +140,15 @@ public:
 		return *this;
 	}
 
-	inline void LogError(size_t errorCount)
+	inline void LogError(size_t errorCount = 1)
 	{
 		m_errorCount += errorCount;
 	}
 
 	// log one error if not equal
 	template<typename T1, typename T2>
-	inline void LogIfNotEq(const T1& t1, const T2& t2)
+	inline std::enable_if_t<std::is_same<bool, decltype(std::declval<T1>() != std::declval<T2>())>::value>  // enable if there is an defination of  [ T1 != T2 ]
+        LogIfNotEq(const T1& t1, const T2& t2)
 	{
 		addErrorCount(t1 != t2);
 	}
@@ -140,8 +156,7 @@ public:
 #pragma region specialization
 	// ||||||||||||||||||||||||||||||||||||||||||
 	// specialization for float
-	template<>
-	inline void LogIfNotEq<float, float>(const float& t1, const float& t2)
+	inline void LogIfNotEq(const float& t1, const float& t2)
 	{
 		if (fabs(t1 - t2) > 1e-8f)
 		{
@@ -151,8 +166,7 @@ public:
 	}
 	// ||||||||||||||||||||||||||||||||||||||||||
 	// specialization for double
-	template<>
-	inline void LogIfNotEq<double, double>(const double& t1, const double& t2)
+	inline void LogIfNotEq(const double& t1, const double& t2)
 	{
 		if (abs(t1 - t2) > 1e-8)
 		{
@@ -268,8 +282,24 @@ public:
 struct TestConfig
 {
 public:
+
+    /*!
+        \brief the name show in the console.
+    */
     std::string m_testName;
+
+    /*!
+        \brief loop time for this test unit, the setting is avaliable for the first time running the specific unit.
+    */
     unsigned int m_loopTime = 1;
+
+    /*!
+        \brief wheter hide the output of this unit test,
+        each unit test complete (include the self looping), will output an message which include the time/unitName...
+        if you set this to TRUE, the out put will only be an dot to provide some feedback.
+    */
+    bool        m_hideThisOutput = false;
+
 };
 
 /*!
@@ -290,6 +320,11 @@ public:
     */
     unsigned int m_runningIndex;
 
+    /*!
+        \brief if TEST_ASSERT failed, whether trigger normal assertion
+    */
+    bool         m_breakIfTestAssertionFailed = true;
+
     TestParameter(unsigned int runningIndex = 0)
         :m_runningIndex(runningIndex)
     {
@@ -304,6 +339,7 @@ struct TestResult
 {
 	unsigned int m_countTests = 0;
 	unsigned int m_countSuccess = 0;
+    unsigned int m_countSkip = 0;
 };
 
 /*!
@@ -356,20 +392,20 @@ inline void RunTest(std::vector<std::function<unsigned int(TestConfig& , TestPar
             errorCountFor_THIS_unitTest = 0;
             TestConfig      testConfig;
             TestParameter   testParameter;
-            TimeCounter     unitTimeCounter;    // count time of a whole test unit costs
+            TimeCounter     unitTimeCounter;    // count time of one test unit costs
 
             try
             {
                 TimeGuard guard(unitTimeCounter);
 
                 testParameter.m_runningIndex    = loopIndex;   // set loop index
-                errorCountFor_THIS_unitTest     = testUnit(testConfig, testParameter);
+                errorCountFor_THIS_unitTest     = testUnit(testConfig, testParameter);  // run test unit
                 ++loopIndex;    // increament the loop index.
             }
             catch (std::exception e)
             {
-                std::cout << "\t" << testConfig.m_testName << "exception happend: " << e.what() << std::endl;
-                continue;
+                std::cout << "\t" << testConfig.m_testName << " :exception happend: " << e.what() << std::endl;
+                break;
             }
 
             isSuccess = (errorCountFor_THIS_unitTest == 0);
@@ -378,30 +414,41 @@ inline void RunTest(std::vector<std::function<unsigned int(TestConfig& , TestPar
                 ++result.m_countSuccess;
             }
 
-            std::printf(
-                // success/failed	errorCount	costTime   unitName
-                "\t%s"              "\t%d"      "\t%8lld %s"   "\t%8lld %s"  "\t\t%s\n",
-                isSuccess ? "success" : "failed",
-                errorCountFor_THIS_unitTest,
-                unitTimeCounter.m_sumDuration.count(), DURATION_TYPE_NAME,
-                testParameter.m_timeCounter.m_sumDuration.count(), DURATION_TYPE_NAME,
-                testConfig.m_testName.c_str());
-
+            // is the user want to reduce the out put?
+            if (testConfig.m_hideThisOutput)
+            {
+                //std::printf(".");   // output an dot for feedback
+            }
+            else
+            {
+                // output detail info include running time and etc.
+                std::printf(
+                    // success/failed	errorCount	costTime   unitName
+                    "\t%s"              "\t%d"      "\t%8lld %s"   "\t%8lld %s"  "\t\t%s\n",
+                    isSuccess ? "success" : "failed",
+                    errorCountFor_THIS_unitTest,
+                    unitTimeCounter.m_sumDuration.count(), DURATION_TYPE_NAME,
+                    testParameter.m_timeCounter.m_sumDuration.count(), DURATION_TYPE_NAME,
+                    testConfig.m_testName.c_str());
+            }
+            
             // if it's the first time that the test unit run,
             // try to get loopTime config from the user codes.
             if (isFirstRun)
             {
-                isFirstRun = false;
                 // get desired loop time from the unit test.
                 // decreased by one, because we have already run it one time.
                 numLoopTime = testConfig.m_loopTime - 1;
+                isFirstRun = false;
             }
 
+            // for the self looping tests, count the time for all loop,
+            // after which we will output some info about the loop result, such as the average of time that each loop costs.
             sumOuterUnitTime.m_sumDuration += unitTimeCounter.m_sumDuration;
             sumInnerUnitTime.m_sumDuration += testParameter.m_timeCounter.m_sumDuration;
-        } while ( (numLoopTime--) > 0);
+        } while ( (numLoopTime--) > 0); // if loopTime greather than one?
 
-        // if loop index greater than one,
+        // if loop index greater than two,
         // means that the same unit test have been run multiple times,
         // out put a small information of those loop tests,
         // for example, the average time costs by the each test.
@@ -421,7 +468,6 @@ inline void RunTest(std::vector<std::function<unsigned int(TestConfig& , TestPar
                 sumOuter / loopIndex,   DURATION_TYPE_NAME,
                 sumInner / loopIndex,   DURATION_TYPE_NAME);
         }
-		
 	}
 }
 
