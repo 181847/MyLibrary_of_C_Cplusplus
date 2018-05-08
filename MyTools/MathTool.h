@@ -39,4 +39,9 @@ almost_equal(T x, T y, int ulp)
 		|| std::abs(x - y) < std::numeric_limits<T>::min();
 }
 
+inline bool AlmostEqual(float a, float b, float tolerance = 1e-5f)
+{
+    return std::abs(a - b) < tolerance;
+}
+
 }// namespace MathTool
