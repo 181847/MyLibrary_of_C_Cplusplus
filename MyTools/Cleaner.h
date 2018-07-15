@@ -3,7 +3,7 @@
 class Cleaner
 {
 public:
-	Cleaner(std::function<void(void)> cleanFunc)
+	explicit Cleaner(std::function<void(void)> cleanFunc)
 		:cleanFunction(cleanFunc)
 	{}
 	~Cleaner()
