@@ -106,7 +106,7 @@ public:
     /*!
         \brief prepare options for entire suit.Start()
     */
-    virtual void PrepareTotal() { printf("Test Suit Start!"); }
+    virtual void PrepareTotal() { printf("Test Suit Start!\n"); }
 
     /*!
         \brief preparations before each case start.
