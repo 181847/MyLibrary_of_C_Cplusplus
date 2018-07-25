@@ -2,6 +2,7 @@
 
 #include "Miscellaneous.h"
 #include <assert.h>
+#include <iostream>
 
 #ifdef WIN32
 #include <intrin.h>
@@ -75,6 +76,16 @@ public:
     {
         return m_name;
     }
+	
+	/*!
+		\brief print a progress percentage into the screen(same line).
+		\param progress a number between 0.0f and 1.0f which will be interpret to 0% to 100%.
+		this is for some long term test to show some information to user.
+	*/
+	void ShowProgress(float progress) const
+	{
+		std::printf("Progress: %.6f%%\r", progress * 100.0f);
+	}
 
 protected:
     /*!
