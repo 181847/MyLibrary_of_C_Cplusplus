@@ -84,7 +84,7 @@ public:
 	*/
 	void ShowProgress(float progress) const
 	{
-		std::printf("Progress: %.6f%%\r", progress * 100.0f);
+		std::printf("Progress: %.4f%%\r", progress * 100.0f);
 	}
 
 protected:
