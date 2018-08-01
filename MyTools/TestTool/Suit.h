@@ -8,23 +8,10 @@ namespace TestSuit
 {
 
 /*!
-    \brief a Suit will create multiple Case instance and run their test code.
-    your job is to wrap the desired Case object into the Suit, and called Start();
-
-    the routine of Suit is running like this:
-    Start()
-    {
-        PrepareTotal();
-            foreach case:
-                environment = PrepareBeforeEachCase(case);
-                case.SetEnvironment(environment);
-                // .... running ...
-                FinishEachCase(case, environment);
-        FinishAllCases();
-    }
+    \brief a basic Suit implementation, define some basic code, and the framework,
+    this will ensure all the Suit instance can be stored by this kind of pointer.
 */
-template<typename ...CASE_TYPE_LIST>
-class Suit
+class SuitInterface
 {
 public:
     std::vector<std::unique_ptr<Case>> m_cases;
@@ -33,26 +20,10 @@ public:
     /*!
         \brief construct the case list with all the types listed in the template parameters.
     */
-    Suit()
-    {
-        InitDefaultCases();
-    }
-    virtual ~Suit() {}
+    SuitInterface() {}
+    virtual ~SuitInterface() {}
 
 private:
-    /*!
-        \brief initialize all the cases in the template parameters.
-    */
-    void InitDefaultCases()
-    {
-        std::unique_ptr<Case> list[] = { nullptr /* prevent array has size of ZERO */, std::make_unique<CASE_TYPE_LIST>()... };
-        const int num = sizeof...(CASE_TYPE_LIST);
-
-        for (int i = 1; i <= num; ++i)
-        {
-            m_cases.push_back(std::move(list[i]));
-        }
-    }
 
 public:
     /*!
@@ -119,7 +90,7 @@ public:
     }// end Start()
 
     /*!
-        \brief prepare options for entire suit.Start()
+        \brief prepare options for entire SuitInterface.Start()
     */
     virtual void PrepareTotal() { printf("Test Suit Start!\n"); }
 
@@ -141,7 +112,49 @@ public:
     /*!
         \brief finish codes when all cases run over.        
     */
-    virtual void FinishAllCases() { printf("Test suit stop!\n"); }
+    virtual void FinishAllCases() { printf("Test Suit stop!\n"); }
+};
+
+/*!
+    \brief a Suit will create multiple Case instance and run their test code.
+    your job is to wrap the desired Case object into the Suit, whether by passing the Case type to the template paramters,
+    or call AddCase() later.
+    And the final work is to call Suit.Start() to fire up all the codes in those cases.
+
+    the routine of Suit is running like this:
+    Start()
+    {
+        PrepareTotal();
+            foreach case:
+                environment = PrepareBeforeEachCase(case);
+                case.SetEnvironment(environment);
+                // .... running ...
+                FinishEachCase(case, environment);
+        FinishAllCases();
+    }
+*/
+template<typename ...CASE_TYPE_LIST>
+class Suit: public SuitInterface
+{
+public:
+    Suit()
+    {
+        InitDefaultCases();
+    }
+    
+    /*!
+        \brief initialize all the cases in the template parameters.
+    */
+    void InitDefaultCases()
+    {
+        std::unique_ptr<Case> list[] = { nullptr /* prevent array has size of ZERO */, std::make_unique<CASE_TYPE_LIST>()... };
+        const int num = sizeof...(CASE_TYPE_LIST);
+
+        for (int i = 1; i <= num; ++i)
+        {
+            m_cases.push_back(std::move(list[i]));
+        }
+    }
 };
 
 } // namespace TestSuit
