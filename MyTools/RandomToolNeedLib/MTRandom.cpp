@@ -64,8 +64,8 @@ unsigned int MTRandom::Random(unsigned int n)
 
 float MTRandom::Random()
 {
-	float r = (float)Random(MAXINT);
-	float divisor = (float)MAXINT;
+	float r = (float)Random(CMATH_MAXINT);
+	float divisor = (float)CMATH_MAXINT;
 	return (r / divisor);
 }
 
