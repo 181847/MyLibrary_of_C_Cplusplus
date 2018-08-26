@@ -1,5 +1,6 @@
 #pragma once
 #include <algorithm>
+#undef min
 
 // this head file define some useful function for math
 
