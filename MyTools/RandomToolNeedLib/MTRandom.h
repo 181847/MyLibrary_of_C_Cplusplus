@@ -23,7 +23,7 @@ const unsigned int CMATH_LOWER_MASK = 0x7fffffff; /* least significant r bits */
 const unsigned int CMATH_TEMPERING_MASK_B = 0x9d2c5680;
 const unsigned int CMATH_TEMPERING_MASK_C = 0xefc60000;
 
-const int MAXINT = int(~unsigned int(0) >> 1);
+const int CMATH_MAXINT = int(~unsigned int(0) >> 1);
 
 }
 
