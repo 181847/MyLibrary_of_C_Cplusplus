@@ -77,3 +77,8 @@ $RECYCLE.BIN/
 
 # Windows shortcuts
 *.lnk
+
+# library files
+*.pdb
+*.dll
+*.lib
