@@ -2,6 +2,7 @@
 #include <memory>
 #include <vector>
 #include <stdio.h>
+#include <future>
 #include "Case.h"
 
 namespace TestSuit
@@ -44,13 +45,10 @@ public:
         for (auto & theCase : m_cases)
         {
             // preparations
-            void * pEnvironment = PrepareBeforeEachCase(theCase.get());
-            theCase->SetEnvironment(pEnvironment);
+            PrepareBeforeEachCase(theCase.get());
 
             // set up time counter
             TimeCounter outer;
-            TimeCounter inner;
-            theCase->SetProgramableTimeCounter(&inner);
 
             // run test case
             try
@@ -81,10 +79,10 @@ public:
             printf("case: %32s <%8lld %s <-- %8lld %s --> >.\n Result: %s\n\n", 
                 theCase->GetName().c_str(),
                 outer.m_sumDuration.count(), outer.DURATION_TYPE_NAME.c_str(),
-                inner.m_sumDuration.count(), inner.DURATION_TYPE_NAME.c_str(),
+                theCase->m_ProgramableTimeCounter.m_sumDuration.count(), theCase->m_ProgramableTimeCounter.DURATION_TYPE_NAME.c_str(),
                 resultMark.c_str());
             
-            FinishEachCase(theCase.get(), pEnvironment);
+            FinishEachCase(theCase.get());
         }// end for each case
         FinishAllCases();
     }// end Start()
@@ -99,7 +97,7 @@ public:
         \param pTheCase point to the Case
         \return return a pointer which will be passed to the Case before it Run().
     */
-    virtual void * PrepareBeforeEachCase(Case * pTheCase) { return nullptr; }
+    virtual void PrepareBeforeEachCase(Case * pTheCase) {}
 
     /*!
         \brief finish codes when one Case::Run() finished (Even a exception happened.).        
@@ -107,7 +105,7 @@ public:
         \param pEnvironment the environment pointer, PLZ DONT leak any memory of this pointer.
                You can clean up the environment here of memory safety.
     */
-    virtual void FinishEachCase(Case * pTheCase, void * pEnvironment) {}
+    virtual void FinishEachCase(Case * pTheCase) {}
 
     /*!
         \brief finish codes when all cases run over.        
@@ -156,7 +154,6 @@ public:
         }
     }
 };
-
 
 /*!
     \brief a helper class to Run multiple Suit at once.
