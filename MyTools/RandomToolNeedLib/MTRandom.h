@@ -9,6 +9,7 @@
 // Original Code from the book <<Game Code Complete: 4th>> by Mike McShaffry. 
 
 /* Period parameters */
+#undef MAXINT
 
 namespace
 {
