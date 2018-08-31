@@ -14,6 +14,9 @@ namespace TestSuit
 */
 class SuitInterface
 {
+protected:
+    using Super = SuitInterface;
+
 public:
     std::vector<std::unique_ptr<Case>> m_cases;
 
@@ -23,8 +26,6 @@ public:
     */
     SuitInterface() {}
     virtual ~SuitInterface() {}
-
-private:
 
 public:
     /*!
@@ -134,6 +135,11 @@ public:
 template<typename ...CASE_TYPE_LIST>
 class Suit: public SuitInterface
 {
+protected:
+    /*!
+        \brief skip the template class, reference to the 
+    */
+    using Super = SuitInterface;
 public:
     Suit()
     {
