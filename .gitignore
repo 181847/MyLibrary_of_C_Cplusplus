@@ -79,6 +79,6 @@ $RECYCLE.BIN/
 *.lnk
 
 # library files
-*.pdb
 *.dll
 *.lib
+*.pdb
