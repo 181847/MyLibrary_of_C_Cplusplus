@@ -12,6 +12,8 @@
 *.so
 *.dylib
 *.dll
+*.exp
+*.ilk
 
 # Fortran module files
 *.mod
@@ -82,3 +84,5 @@ $RECYCLE.BIN/
 *.dll
 *.lib
 *.pdb
+
+build/
